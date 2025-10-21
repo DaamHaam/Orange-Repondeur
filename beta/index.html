@@ -49,6 +49,18 @@
       color: #333;
     }
 
+    .version-badge {
+      position: fixed;
+      top: 0.4rem;
+      right: 0.6rem;
+      font-size: 0.65rem;
+      font-weight: 600;
+      color: #666;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      pointer-events: none;
+    }
+
     #filters {
       display: flex;
       flex-wrap: wrap;
@@ -287,6 +299,8 @@
   </style>
 </head>
 <body>
+
+  <div class="version-badge">Version 0.01</div>
 
   <div id="filters">
     <select id="filter-kine"><option value="">Tous les kinés</option></select>
