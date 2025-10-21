@@ -14,22 +14,33 @@ export default function useSupabaseMessages() {
   const fetchMessages = useCallback(async () => {
     setLoading(true);
     setError(null);
-    const { data, error: fetchError } = await supabase
-      .from('messages')
-      .select('*')
-      .order('date', { ascending: false });
 
-    if (fetchError) {
+    try {
+      const { data, error: fetchError } = await supabase
+        .from('messages')
+        .select('*')
+        .order('date', { ascending: false });
+
+      if (fetchError) {
+        throw fetchError;
+      }
+
+      setMessages(data ?? []);
+    } catch (fetchError) {
+      console.error('Erreur de récupération Supabase :', fetchError);
       setError(fetchError);
       setMessages([]);
-    } else {
-      setMessages(data ?? []);
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   }, []);
 
   useEffect(() => {
-    fetchMessages();
+    fetchMessages().catch((unhandledError) => {
+      console.error('Erreur inattendue lors du chargement des messages :', unhandledError);
+      setError(unhandledError);
+      setLoading(false);
+    });
   }, [fetchMessages]);
 
   const updateMessage = useCallback(async (id, updates) => {
