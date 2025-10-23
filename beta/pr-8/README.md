@@ -4,11 +4,10 @@ Application Vite + React utilisée pour consulter et gérer les messages issus d
 
 ## Mettre à jour l'application sans casser la publication GitHub Pages
 
-La publication automatique GitHub Pages repose sur trois éléments synchronisés :
+La publication automatique GitHub Pages repose désormais sur deux éléments synchronisés :
 
-1. **Le `base` de Vite** défini dans `vite.config.js`. Il est maintenant piloté par la variable d'environnement `VITE_BASE` (avec une valeur par défaut `/Orange-Repondeur/`).
-2. **Le chemin de déploiement** dans les workflows GitHub Actions (`.github/workflows/pages.yml`). Chaque environnement (prod, beta, preview de PR) définit `VITE_BASE` avant `npm run build` et déploie le contenu de `dist/` dans le même sous-dossier.
-3. **Le fallback SPA `404.html`** copié automatiquement à partir de `index.html` pendant le post-build pour permettre l'ouverture directe d'URL profondes sur GitHub Pages.
+1. **Le `base` de Vite** défini dans `vite.config.js` est forcé à `./`. Les chemins générés sont donc relatifs et restent valides, que la build soit publiée à la racine (`/Orange-Repondeur/`), dans `/beta/` ou dans les dossiers de prévisualisation.
+2. **Le fallback SPA `404.html`** copié automatiquement à partir de `index.html` pendant le post-build pour permettre l'ouverture directe d'URL profondes sur GitHub Pages.
 
 Pour éviter toute régression lors d'une mise à jour :
 
@@ -27,7 +26,7 @@ Pour éviter toute régression lors d'une mise à jour :
 4. **Commiter les sources uniquement** : GitHub Pages reconstruira le site à partir du dépôt, il est inutile de versionner le contenu du dossier `dist`.
 5. **Mettre à jour le numéro de version** en synchronisant `package.json` et l'étiquette affichée dans l'application (`src/App.jsx`) pour suivre les évolutions déployées.
 
-En cas de changement du nom du dépôt ou du chemin de publication, ajustez `VITE_BASE` lors du build (par exemple `VITE_BASE=/Orange-Repondeur/beta/ npm run build`). Le `vite.config.js` normalise automatiquement le chemin (ajout du `/` initial et final) pour éviter les erreurs de configuration.
+Le `vite.config.js` n'emploie plus de variable d'environnement pour la base : GitHub Pages est compatible avec les chemins relatifs et la même build fonctionne quel que soit le sous-dossier cible. Les workflows GitHub Actions peuvent donc se contenter de lancer `npm run build` avant de publier `dist/` à l'endroit souhaité.
 
 ## Scripts utiles
 - `npm run dev` : lance le serveur de développement Vite.
