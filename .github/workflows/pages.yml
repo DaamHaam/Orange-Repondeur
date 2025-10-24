@@ -4,17 +4,20 @@ on:
   push:
     branches: [ main, Next ]
   pull_request:
-    # On veut des préviews pour les PR vers main ET vers Next
     branches: [ main, Next ]
     types: [opened, synchronize, reopened]
 
 permissions:
-  contents: write        # nécessaire pour push sur gh-pages
-  pull-requests: write   # nécessaire pour commenter l'URL de preview
+  contents: write        # push sur gh-pages
+  pull-requests: write   # commenter l'URL de preview
 
 concurrency:
   group: pages-${{ github.workflow }}-${{ github.ref || format('pr-{0}', github.event.number) }}
   cancel-in-progress: true
+
+env:
+  NODE_VERSION: '20'
+  REPO_SLUG: 'Orange-Repondeur'   # ⚠️ Assure-toi que le slug correspond exactement au nom du repo
 
 jobs:
   # --- PROD: push sur main -> racine de gh-pages ---
@@ -26,24 +29,27 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: ${{ env.NODE_VERSION }}
           cache: 'npm'
 
       - name: Installer les dépendances
         run: npm ci
 
       - name: Build (prod)
+        # Si ton Vite lit VITE_BASE, on lui injecte la base prod.
+        # Si ton Vite est en base './', cette variable sera simplement ignorée.
         env:
-          VITE_BASE: /Orange-Repondeur/
+          VITE_BASE: /${{ env.REPO_SLUG }}/
         run: npm run build
 
-      - name: Deploy production to gh-pages root
+      - name: Déployer production (racine gh-pages)
         uses: peaceiris/actions-gh-pages@v4
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_branch: gh-pages
           publish_dir: ./dist
-          keep_files: true        # NE PAS effacer /beta ni /pr-*
+          # On garde les autres dossiers (beta/, beta/pr-*/). On écrase seulement les fichiers de la racine.
+          keep_files: true
 
   # --- BETA: push sur Next -> gh-pages/beta ---
   deploy-beta:
@@ -54,7 +60,7 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: ${{ env.NODE_VERSION }}
           cache: 'npm'
 
       - name: Installer les dépendances
@@ -62,19 +68,19 @@ jobs:
 
       - name: Build (beta)
         env:
-          VITE_BASE: /Orange-Repondeur/beta/
+          VITE_BASE: /${{ env.REPO_SLUG }}/beta/
         run: npm run build
 
-      - name: Deploy beta to gh-pages/beta
+      - name: Déployer beta (gh-pages/beta)
         uses: peaceiris/actions-gh-pages@v4
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_branch: gh-pages
           publish_dir: ./dist
           destination_dir: beta
-          keep_files: true
+          keep_files: true   # on préserve les autres dossiers (pr-*)
 
-  # --- PR PREVIEW vers Next: gh-pages/beta/pr-<num>/ ---
+  # --- PREVIEW PR vers Next: gh-pages/beta/pr-<num>/ ---
   pr-preview-next:
     if: github.event_name == 'pull_request' && github.base_ref == 'Next'
     runs-on: ubuntu-latest
@@ -85,7 +91,7 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: ${{ env.NODE_VERSION }}
           cache: 'npm'
 
       - name: Installer les dépendances
@@ -93,30 +99,27 @@ jobs:
 
       - name: Build (PR preview Next)
         env:
-          VITE_BASE: /Orange-Repondeur/beta/pr-${{ github.event.number }}/
+          VITE_BASE: /${{ env.REPO_SLUG }}/beta/pr-${{ github.event.number }}/
         run: npm run build
 
-      - name: Deploy PR preview (Next)
+      - name: Déployer PR preview (Next)
         uses: peaceiris/actions-gh-pages@v4
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_branch: gh-pages
           publish_dir: ./dist
           destination_dir: beta/pr-${{ github.event.number }}
-          keep_files: true
+          keep_files: true   # on n'efface pas les autres previews
 
-      - name: Compute repo vars
-        run: echo "REPO_NAME=${GITHUB_REPOSITORY#*/}" >> $GITHUB_ENV
-
-      - name: Comment preview URL (Next)
+      - name: Commenter l'URL de preview (Next)
         uses: marocchino/sticky-pull-request-comment@v2
         with:
           recreate: true
           message: |
             🚀 Préversion déployée :
-            https://${{ github.repository_owner }}.github.io/${{ env.REPO_NAME }}/beta/pr-${{ github.event.number }}/
+            https://${{ github.repository_owner }}.github.io/${{ env.REPO_SLUG }}/beta/pr-${{ github.event.number }}/
 
-  # --- PR PREVIEW vers main: gh-pages/beta/pr-<num>/ ---
+  # --- PREVIEW PR vers main: gh-pages/beta/pr-<num>/ (même dossier que pour Next) ---
   pr-preview-main:
     if: github.event_name == 'pull_request' && github.base_ref == 'main'
     runs-on: ubuntu-latest
@@ -127,7 +130,7 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: ${{ env.NODE_VERSION }}
           cache: 'npm'
 
       - name: Installer les dépendances
@@ -135,10 +138,10 @@ jobs:
 
       - name: Build (PR preview main)
         env:
-          VITE_BASE: /Orange-Repondeur/beta/pr-${{ github.event.number }}/
+          VITE_BASE: /${{ env.REPO_SLUG }}/beta/pr-${{ github.event.number }}/
         run: npm run build
 
-      - name: Deploy PR preview (main)
+      - name: Déployer PR preview (main)
         uses: peaceiris/actions-gh-pages@v4
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
@@ -147,13 +150,10 @@ jobs:
           destination_dir: beta/pr-${{ github.event.number }}
           keep_files: true
 
-      - name: Compute repo vars
-        run: echo "REPO_NAME=${GITHUB_REPOSITORY#*/}" >> $GITHUB_ENV
-
-      - name: Comment preview URL (main)
+      - name: Commenter l'URL de preview (main)
         uses: marocchino/sticky-pull-request-comment@v2
         with:
           recreate: true
           message: |
             🚀 Préversion déployée :
-            https://${{ github.repository_owner }}.github.io/${{ env.REPO_NAME }}/beta/pr-${{ github.event.number }}/
+            https://${{ github.repository_owner }}.github.io/${{ env.REPO_SLUG }}/beta/pr-${{ github.event.number }}/
