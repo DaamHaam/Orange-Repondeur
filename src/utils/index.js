@@ -41,6 +41,11 @@ export const getCardClassByKine = (kineName) => {
   return sanitized ? `card-kine-${sanitized}` : '';
 };
 
+export const getCardClassByType = (typeName) => {
+  const sanitized = sanitizeForClass(typeName || '');
+  return sanitized ? `card-type-${sanitized}` : '';
+};
+
 export const copyToClipboard = async (text) => {
   if (!navigator?.clipboard) {
     throw new Error('API Clipboard indisponible');

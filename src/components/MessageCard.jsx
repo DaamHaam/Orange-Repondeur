@@ -5,6 +5,7 @@ import {
   copyToClipboard,
   formatDate,
   getCardClassByKine,
+  getCardClassByType,
   getKineStyle,
   getMessageTypeStyle,
 } from '../utils/index.js';
@@ -33,9 +34,10 @@ const MessageCard = ({ message, onAssignKine, onUpdateType, onDelete }) => {
   );
 
   const cardClassName = useMemo(() => {
-    const className = getCardClassByKine(selectedKine);
-    return ['card', className].filter(Boolean).join(' ');
-  }, [selectedKine]);
+    const kineClass = getCardClassByKine(selectedKine);
+    const typeClass = getCardClassByType(selectedType);
+    return ['card', kineClass, typeClass].filter(Boolean).join(' ');
+  }, [selectedKine, selectedType]);
 
   const PlayIcon = ICONS.Play;
   const PauseIcon = ICONS.Pause;
