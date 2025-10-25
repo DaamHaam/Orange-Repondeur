@@ -1,4 +1,5 @@
 import { KINES, MESSAGE_TYPES } from '../constants/index.jsx';
+import FilterSelect from './ui/FilterSelect.jsx';
 
 const FiltersBar = ({ filters, onChange }) => {
   const handleKineChange = (event) => {
@@ -10,8 +11,14 @@ const FiltersBar = ({ filters, onChange }) => {
   };
 
   return (
-    <div id="filters">
-      <select id="filter-kine" value={filters.kine} onChange={handleKineChange}>
+    <div className="filter-toolbar" role="region" aria-label="Filtres des messages">
+      <FilterSelect
+        id="filter-kine"
+        label="Kiné"
+        description="Sélectionner une affectation"
+        value={filters.kine}
+        onChange={handleKineChange}
+      >
         <option value="">Tous les kinés</option>
         {KINES.map((kine) => (
           <option key={kine} value={kine}>
@@ -19,15 +26,21 @@ const FiltersBar = ({ filters, onChange }) => {
           </option>
         ))}
         <option value="Non assigné">Kiné non assigné</option>
-      </select>
-      <select id="filter-type" value={filters.type} onChange={handleTypeChange}>
+      </FilterSelect>
+      <FilterSelect
+        id="filter-type"
+        label="Type de message"
+        description="Filtrer par catégorie"
+        value={filters.type}
+        onChange={handleTypeChange}
+      >
         <option value="">Tous types</option>
         {MESSAGE_TYPES.map((type) => (
           <option key={type} value={type}>
             {type}
           </option>
         ))}
-      </select>
+      </FilterSelect>
     </div>
   );
 };

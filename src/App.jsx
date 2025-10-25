@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useState } from 'react';
 import FiltersBar from './components/FiltersBar.jsx';
 import MessageList from './components/MessageList.jsx';
+import AppShell from './components/ui/AppShell.jsx';
+import PageHeader from './components/ui/PageHeader.jsx';
 import { supabase } from './services/supabaseClient.js';
 
 const defaultFilters = {
@@ -123,19 +125,24 @@ const App = () => {
   };
 
   return (
-    <div className="app">
-      <div className="version-badge">v0.02</div>
-      <FiltersBar filters={filters} onChange={handleFilterChange} />
-      <MessageList
-        messages={filteredMessages}
-        loading={loading}
-        error={error}
-        hasMessages={messages.length > 0}
-        onAssignKine={handleAssignKine}
-        onUpdateType={handleUpdateType}
-        onDelete={handleDelete}
+    <AppShell version="0.20">
+      <PageHeader
+        title="Orange Répondeur"
+        subtitle="Suivez, affectez et traitez les messages vocaux des patients plus sereinement."
       />
-    </div>
+      <FiltersBar filters={filters} onChange={handleFilterChange} />
+      <main className="app-content" aria-live="polite">
+        <MessageList
+          messages={filteredMessages}
+          loading={loading}
+          error={error}
+          hasMessages={messages.length > 0}
+          onAssignKine={handleAssignKine}
+          onUpdateType={handleUpdateType}
+          onDelete={handleDelete}
+        />
+      </main>
+    </AppShell>
   );
 };
 
