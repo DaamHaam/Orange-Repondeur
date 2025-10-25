@@ -41,10 +41,10 @@ body {
   min-height: 100vh;
   background-color: #eef1f8;
   background-image:
-    radial-gradient(1200px at 20% -10%, rgba(255, 255, 255, 0.85), transparent 65%),
-    radial-gradient(900px at 85% 10%, rgba(255, 185, 120, 0.22), transparent 70%),
-    radial-gradient(780px at 10% 80%, rgba(128, 208, 255, 0.16), transparent 72%),
-    linear-gradient(135deg, #f7f9fc 0%, #eef2f8 52%, #f9faff 100%);
+    radial-gradient(1100px at 15% -15%, rgba(255, 214, 153, 0.28), transparent 65%),
+    radial-gradient(900px at 82% 4%, rgba(186, 201, 255, 0.32), transparent 70%),
+    radial-gradient(820px at 12% 88%, rgba(255, 173, 214, 0.22), transparent 75%),
+    linear-gradient(140deg, #f5f6fb 0%, #f1f4ff 45%, #fef4ff 100%);
   background-attachment: fixed;
   background-repeat: no-repeat;
   position: relative;
@@ -69,46 +69,71 @@ body::after {
 body::before {
   top: -15vh;
   right: -12vw;
-  background: radial-gradient(circle, rgba(255, 121, 0, 0.32), transparent 60%);
+  background: radial-gradient(circle, rgba(255, 168, 112, 0.35), transparent 60%);
 }
 
 body::after {
   bottom: -18vh;
   left: -14vw;
-  background: radial-gradient(circle, rgba(118, 184, 255, 0.28), transparent 62%);
+  background: radial-gradient(circle, rgba(164, 196, 255, 0.33), transparent 65%);
 }
 
 .version-badge {
   position: fixed;
-  top: 0.8rem;
-  right: 1rem;
-  padding: 0.25rem 0.7rem;
-  font-size: 0.75rem;
+  top: 0.4rem;
+  right: 0.65rem;
+  padding: 0;
+  font-size: 0.55rem;
   font-weight: 600;
-  color: #39424e;
-  background: rgba(255, 255, 255, 0.85);
-  border-radius: 999px;
-  box-shadow: 0 8px 18px -12px rgba(0, 0, 0, 0.35);
+  color: rgba(57, 66, 78, 0.55);
   text-transform: uppercase;
-  letter-spacing: 0.12em;
+  letter-spacing: 0.18em;
   pointer-events: none;
+  user-select: none;
 }
 
 #filters {
   display: flex;
   flex-wrap: wrap;
-  gap: var(--gap);
+  gap: 0.85rem;
   justify-content: center;
   margin-bottom: var(--gap);
   padding: 0 0.5rem;
 }
 
 #filters select {
-  padding: 0.5rem 0.8rem;
-  border-radius: var(--border-radius);
-  border: 1px solid #ccc;
-  background-color: #fff;
+  padding: 0.45rem 2.35rem 0.45rem 0.95rem;
+  border-radius: 999px;
+  border: 1px solid rgba(148, 163, 184, 0.45);
+  background-color: transparent;
+  background-image:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.94), rgba(243, 246, 255, 0.82)),
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath fill='none' stroke='%2356627a' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round' d='M1 1l5 5 5-5'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.85rem center, right 0.85rem center;
+  background-size: auto, 12px 8px;
   min-width: 150px;
+  color: #2a3240;
+  font-size: 0.92rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  cursor: pointer;
+  box-shadow: 0 12px 26px -24px rgba(15, 23, 42, 0.78);
+  appearance: none;
+  -webkit-appearance: none;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
+}
+
+#filters select:hover {
+  border-color: rgba(71, 85, 105, 0.5);
+  transform: translateY(-1px);
+  box-shadow: 0 16px 28px -24px rgba(15, 23, 42, 0.82);
+}
+
+#filters select:focus-visible {
+  outline: none;
+  border-color: rgba(79, 70, 229, 0.55);
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.18);
 }
 
 #list {
@@ -296,6 +321,7 @@ body::after {
 
 .summary-line .text {
   flex-grow: 1;
+  min-width: 0;
   word-break: break-word;
 }
 
@@ -609,14 +635,15 @@ select.type-Autre {
   }
 
   .summary-line {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 0.5rem;
+    flex-direction: row;
+    align-items: center;
+    gap: 0.4rem;
     font-size: 0.82rem;
+    flex-wrap: nowrap;
   }
 
   .summary-line .copy-icon {
-    align-self: flex-end;
+    margin-left: auto;
   }
 
   .actions {
