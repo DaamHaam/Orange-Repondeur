@@ -8,8 +8,8 @@ on:
     types: [opened, synchronize, reopened]
 
 permissions:
-  contents: write        # push sur gh-pages
-  pull-requests: write   # commenter l'URL de preview
+  contents: write
+  pull-requests: write
 
 concurrency:
   group: pages-${{ github.workflow }}-${{ github.ref || format('pr-{0}', github.event.number) }}
@@ -17,39 +17,35 @@ concurrency:
 
 env:
   NODE_VERSION: '20'
-  REPO_SLUG: 'Orange-Repondeur'   # ⚠️ Assure-toi que le slug correspond exactement au nom du repo
+  REPO_SLUG: 'Orange-Repondeur'   # ⚠️ vérifie le slug exact du repo
 
 jobs:
-  # --- PROD: push sur main -> racine de gh-pages ---
+  # --- PROD: push sur main -> gh-pages (racine) ---
   deploy-prod:
     if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-
       - uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'npm'
-
-      - name: Installer les dépendances
+      - name: Install
         run: npm ci
-
       - name: Build (prod)
-        # Si ton Vite lit VITE_BASE, on lui injecte la base prod.
-        # Si ton Vite est en base './', cette variable sera simplement ignorée.
         env:
           VITE_BASE: /${{ env.REPO_SLUG }}/
         run: npm run build
 
-      - name: Déployer production (racine gh-pages)
-        uses: peaceiris/actions-gh-pages@v4
+      # Déploie UNIQUEMENT dist/ à la racine
+      - name: Deploy prod (root)
+        uses: JamesIves/github-pages-deploy-action@v4
         with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_branch: gh-pages
-          publish_dir: ./dist
-          # On garde les autres dossiers (beta/, beta/pr-*/). On écrase seulement les fichiers de la racine.
-          keep_files: true
+          branch: gh-pages
+          folder: dist
+          clean: false                # ne pas effacer beta/ et pr-*/
+          clean-exclude: |
+            beta/*
 
   # --- BETA: push sur Next -> gh-pages/beta ---
   deploy-beta:
@@ -57,28 +53,25 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-
       - uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'npm'
-
-      - name: Installer les dépendances
+      - name: Install
         run: npm ci
-
       - name: Build (beta)
         env:
           VITE_BASE: /${{ env.REPO_SLUG }}/beta/
         run: npm run build
 
-      - name: Déployer beta (gh-pages/beta)
-        uses: peaceiris/actions-gh-pages@v4
+      # Déploie UNIQUEMENT dist/ dans beta/
+      - name: Deploy beta (/beta)
+        uses: JamesIves/github-pages-deploy-action@v4
         with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_branch: gh-pages
-          publish_dir: ./dist
-          destination_dir: beta
-          keep_files: true   # on préserve les autres dossiers (pr-*)
+          branch: gh-pages
+          folder: dist
+          target-folder: beta
+          clean: true                 # nettoie beta/ avant d’écrire
 
   # --- PREVIEW PR vers Next: gh-pages/beta/pr-<num>/ ---
   pr-preview-next:
@@ -94,24 +87,30 @@ jobs:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'npm'
 
-      - name: Installer les dépendances
+      - name: Install
         run: npm ci
 
-      - name: Build (PR preview Next)
+      - name: Build (PR Next)
+        # Marche avec base='./' ou avec VITE_BASE lu par Vite
         env:
           VITE_BASE: /${{ env.REPO_SLUG }}/beta/pr-${{ github.event.number }}/
-        run: npm run build
+        run: |
+          npm run build
+          # garde-fou: on échoue si dist/ est vide / incorrect
+          test -f dist/index.html || (echo "dist/index.html manquant" && exit 1)
+          echo "--- DIST CONTENT (top) ---"
+          find dist -maxdepth 2 -type f | sort | sed 's/^/  /'
 
-      - name: Déployer PR preview (Next)
-        uses: peaceiris/actions-gh-pages@v4
+      # Déploie UNIQUEMENT dist/ dans le bon sous-dossier, en le nettoyant
+      - name: Deploy PR preview (Next)
+        uses: JamesIves/github-pages-deploy-action@v4
         with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_branch: gh-pages
-          publish_dir: ./dist
-          destination_dir: beta/pr-${{ github.event.number }}
-          keep_files: true   # on n'efface pas les autres previews
+          branch: gh-pages
+          folder: dist
+          target-folder: beta/pr-${{ github.event.number }}
+          clean: true
 
-      - name: Commenter l'URL de preview (Next)
+      - name: Comment preview URL (Next)
         uses: marocchino/sticky-pull-request-comment@v2
         with:
           recreate: true
@@ -119,7 +118,7 @@ jobs:
             🚀 Préversion déployée :
             https://${{ github.repository_owner }}.github.io/${{ env.REPO_SLUG }}/beta/pr-${{ github.event.number }}/
 
-  # --- PREVIEW PR vers main: gh-pages/beta/pr-<num>/ (même dossier que pour Next) ---
+  # --- PREVIEW PR vers main: même destination /beta/pr-<num>/ ---
   pr-preview-main:
     if: github.event_name == 'pull_request' && github.base_ref == 'main'
     runs-on: ubuntu-latest
@@ -133,24 +132,27 @@ jobs:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'npm'
 
-      - name: Installer les dépendances
+      - name: Install
         run: npm ci
 
-      - name: Build (PR preview main)
+      - name: Build (PR main)
         env:
           VITE_BASE: /${{ env.REPO_SLUG }}/beta/pr-${{ github.event.number }}/
-        run: npm run build
+        run: |
+          npm run build
+          test -f dist/index.html || (echo "dist/index.html manquant" && exit 1)
+          echo "--- DIST CONTENT (top) ---"
+          find dist -maxdepth 2 -type f | sort | sed 's/^/  /'
 
-      - name: Déployer PR preview (main)
-        uses: peaceiris/actions-gh-pages@v4
+      - name: Deploy PR preview (main)
+        uses: JamesIves/github-pages-deploy-action@v4
         with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_branch: gh-pages
-          publish_dir: ./dist
-          destination_dir: beta/pr-${{ github.event.number }}
-          keep_files: true
+          branch: gh-pages
+          folder: dist
+          target-folder: beta/pr-${{ github.event.number }}
+          clean: true
 
-      - name: Commenter l'URL de preview (main)
+      - name: Comment preview URL (main)
         uses: marocchino/sticky-pull-request-comment@v2
         with:
           recreate: true
