@@ -124,7 +124,10 @@ const App = () => {
 
   return (
     <div className="app">
-      <div className="version-badge">v0.02</div>
+      <header className="app-header">
+        <h1 className="app-title">orange en React !</h1>
+      </header>
+      <div className="version-badge">v0.10</div>
       <FiltersBar filters={filters} onChange={handleFilterChange} />
       <MessageList
         messages={filteredMessages}
