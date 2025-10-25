@@ -11,9 +11,9 @@ permissions:
   contents: write
   pull-requests: write
 
-concurrency:
-  group: pages-${{ github.workflow }}-${{ github.ref || format('pr-{0}', github.event.number) }}
-  cancel-in-progress: true
+# concurrency:
+  # group: pages-${{ github.workflow }}-${{ github.ref || format('pr-{0}', github.event.number) }}
+  # cancel-in-progress: true
 
 env:
   NODE_VERSION: '20'
