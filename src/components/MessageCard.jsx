@@ -34,8 +34,10 @@ const MessageCard = ({ message, onAssignKine, onUpdateType, onDelete }) => {
 
   const cardClassName = useMemo(() => {
     const className = getCardClassByKine(selectedKine);
-    return ['card', className].filter(Boolean).join(' ');
-  }, [selectedKine]);
+    return ['card', className, messageTypeStyle.className]
+      .filter(Boolean)
+      .join(' ');
+  }, [selectedKine, messageTypeStyle.className]);
 
   const PlayIcon = ICONS.Play;
   const PauseIcon = ICONS.Pause;
@@ -126,46 +128,58 @@ const MessageCard = ({ message, onAssignKine, onUpdateType, onDelete }) => {
   return (
     <div className={cardClassName} data-id={message.id}>
       <div className="meta">
-        <div className="date">{formatDate(message.date)}</div>
-        <div className="phone">
-          <span>{message.phone}</span>
-          <button
-            type="button"
-            className="copy-icon"
-            title="Copier numéro"
-            onClick={handleCopyPhone}
-          >
-            {phoneCopied ? <CopiedIcon /> : <CopyIcon />}
-            <span className="sr-only">Copier le numéro</span>
-          </button>
+        <div className="meta-header">
+          <div className="date">{formatDate(message.date)}</div>
         </div>
-        {message.name ? <div className="name">{message.name}</div> : null}
-        {message.email ? <div className="email">{message.email}</div> : null}
-        <select
-          className={['select-kine', kineStyle.className].filter(Boolean).join(' ')}
-          style={{ backgroundColor: kineStyle.backgroundColor }}
-          value={selectedKine}
-          onChange={handleKineChange}
-        >
-          <option value="">Kiné non assigné</option>
-          {KINES.map((kine) => (
-            <option key={kine} value={kine}>
-              {kine}
-            </option>
-          ))}
-        </select>
-        <select
-          className={['select-type', messageTypeStyle.className].filter(Boolean).join(' ')}
-          style={{ backgroundColor: messageTypeStyle.backgroundColor }}
-          value={selectedType}
-          onChange={handleTypeChange}
-        >
-          {MESSAGE_TYPES.map((type) => (
-            <option key={type} value={type}>
-              {type}
-            </option>
-          ))}
-        </select>
+        <div className="meta-contact">
+          <div className="phone">
+            <span>{message.phone}</span>
+            <button
+              type="button"
+              className="copy-icon"
+              title="Copier numéro"
+              onClick={handleCopyPhone}
+            >
+              {phoneCopied ? <CopiedIcon /> : <CopyIcon />}
+              <span className="sr-only">Copier le numéro</span>
+            </button>
+          </div>
+          {message.name ? <div className="name">{message.name}</div> : null}
+          {message.email ? <div className="email">{message.email}</div> : null}
+        </div>
+        <div className="meta-controls">
+          <label className="field">
+            <select
+              className={['select-kine', kineStyle.className].filter(Boolean).join(' ')}
+              style={{ backgroundColor: kineStyle.backgroundColor }}
+              value={selectedKine}
+              onChange={handleKineChange}
+              aria-label="Assignation du kiné"
+            >
+              <option value="">Kiné non assigné</option>
+              {KINES.map((kine) => (
+                <option key={kine} value={kine}>
+                  {kine}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label className="field">
+            <select
+              className={['select-type', messageTypeStyle.className].filter(Boolean).join(' ')}
+              style={{ backgroundColor: messageTypeStyle.backgroundColor }}
+              value={selectedType}
+              onChange={handleTypeChange}
+              aria-label="Type de rendez-vous"
+            >
+              {MESSAGE_TYPES.map((type) => (
+                <option key={type} value={type}>
+                  {type}
+                </option>
+              ))}
+            </select>
+          </label>
+        </div>
       </div>
       <div className="main-content">
         <div

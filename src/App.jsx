@@ -124,7 +124,7 @@ const App = () => {
 
   return (
     <div className="app">
-      <div className="version-badge">v0.02</div>
+      <div className="version-badge">v0.04</div>
       <FiltersBar filters={filters} onChange={handleFilterChange} />
       <MessageList
         messages={filteredMessages}
