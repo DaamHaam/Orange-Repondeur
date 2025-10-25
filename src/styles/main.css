@@ -112,7 +112,7 @@ body::after {
 }
 
 #list {
-  width: min(1180px, 96vw);
+  width: min(1260px, 96vw);
   margin: 0 auto;
   padding: 0 1.25rem 2rem;
   box-sizing: border-box;
@@ -259,8 +259,8 @@ body::after {
 }
 
 .transcript {
-  line-height: 1.6;
-  font-size: 1rem;
+  line-height: 1.58;
+  font-size: 0.95rem;
   margin: 0;
   padding: 1.05rem 1.2rem;
   flex-grow: 1;
@@ -278,7 +278,7 @@ body::after {
 }
 
 .summary-line {
-  font-size: 0.9rem;
+  font-size: 0.86rem;
   color: #2e3b4b;
   background: linear-gradient(135deg, rgba(255, 255, 255, 0.96), rgba(255, 255, 255, 0.75));
   padding: 0.75rem 1rem;
@@ -375,6 +375,8 @@ body::after {
   background: linear-gradient(145deg, rgba(255, 221, 221, 0.95), rgba(255, 234, 234, 0.95));
   color: #c9302c;
   border-color: rgba(249, 112, 102, 0.35);
+  align-self: center;
+  margin-inline: auto;
 }
 
 .actions button.delete-btn:hover {
@@ -519,7 +521,7 @@ select.type-Autre {
 
 @media (min-width: 768px) {
   .card {
-    grid-template-columns: 16.5rem 2.1fr 12.5rem;
+    grid-template-columns: 16rem 2.6fr 11.5rem;
     padding: 1.35rem 1.5rem;
     gap: 1.35rem;
   }
@@ -539,12 +541,12 @@ select.type-Autre {
 
 @media (min-width: 1200px) {
   .card {
-    grid-template-columns: 18rem 2.5fr 13.5rem;
-    gap: 1.5rem;
+    grid-template-columns: 18rem 3fr 12.5rem;
+    gap: 1.6rem;
   }
 
   #list {
-    gap: 1.5rem;
+    gap: 1.6rem;
   }
 }
 
@@ -559,10 +561,6 @@ select.type-Autre {
 
   .actions .audio-controls {
     justify-content: space-between;
-  }
-
-  .actions .delete-btn {
-    margin-left: auto;
   }
 
   #filters {
