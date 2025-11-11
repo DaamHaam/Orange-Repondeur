@@ -17,6 +17,7 @@ const MessageCard = ({ message, onAssignKine, onUpdateType, onDelete }) => {
   const [selectedType, setSelectedType] = useState(message.message_type || 'Autre');
   const [phoneCopied, setPhoneCopied] = useState(false);
   const [summaryCopied, setSummaryCopied] = useState(false);
+  const [transcriptCopied, setTranscriptCopied] = useState(false);
   const audioController = useAudioController(message.audio_path);
 
   useEffect(() => {
@@ -52,6 +53,13 @@ const MessageCard = ({ message, onAssignKine, onUpdateType, onDelete }) => {
       return '<em>Pas de transcription.</em>';
     }
     return message.transcript.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+  }, [message.transcript]);
+
+  const transcriptText = useMemo(() => {
+    if (!message.transcript) {
+      return '';
+    }
+    return message.transcript.replace(/\*\*(.*?)\*\*/g, '$1');
   }, [message.transcript]);
 
   const summaryText = useMemo(() => {
@@ -102,6 +110,19 @@ const MessageCard = ({ message, onAssignKine, onUpdateType, onDelete }) => {
       await copyToClipboard(summaryText);
       setSummaryCopied(true);
       setTimeout(() => setSummaryCopied(false), COPY_TIMEOUT);
+    } catch (copyError) {
+      alert(copyError.message || 'Erreur lors de la copie.');
+    }
+  };
+
+  const handleCopyTranscript = async () => {
+    if (!transcriptText) {
+      return;
+    }
+    try {
+      await copyToClipboard(transcriptText);
+      setTranscriptCopied(true);
+      setTimeout(() => setTranscriptCopied(false), COPY_TIMEOUT);
     } catch (copyError) {
       alert(copyError.message || 'Erreur lors de la copie.');
     }
@@ -170,10 +191,22 @@ const MessageCard = ({ message, onAssignKine, onUpdateType, onDelete }) => {
         </select>
       </div>
       <div className="main-content">
-        <div
-          className="transcript"
-          dangerouslySetInnerHTML={{ __html: transcriptHtml }}
-        />
+        <div className="transcript-wrapper">
+          <button
+            type="button"
+            className="copy-icon transcript-copy"
+            title="Copier le message"
+            onClick={handleCopyTranscript}
+            disabled={!transcriptText}
+          >
+            {transcriptCopied ? <CopiedIcon /> : <CopyIcon />}
+            <span className="sr-only">Copier le contenu du message</span>
+          </button>
+          <div
+            className="transcript"
+            dangerouslySetInnerHTML={{ __html: transcriptHtml }}
+          />
+        </div>
         <div className="summary-line">
           <span className="text">{summaryText}</span>
           <button
