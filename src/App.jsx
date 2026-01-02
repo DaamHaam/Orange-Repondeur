@@ -22,11 +22,63 @@ const applyFilters = (messages, filters) =>
 const sortMessages = (messages) =>
   [...messages].sort((a, b) => new Date(b.date) - new Date(a.date));
 
+const THEME_STORAGE_KEY = 'themePreference';
+
 const App = () => {
   const [messages, setMessages] = useState([]);
   const [filters, setFilters] = useState(defaultFilters);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+
+  const getStoredThemePreference = () => {
+    if (typeof window === 'undefined') {
+      return null;
+    }
+
+    const storedTheme = window.localStorage.getItem(THEME_STORAGE_KEY);
+    if (storedTheme === 'festif' || storedTheme === 'normal') {
+      return storedTheme;
+    }
+
+    return null;
+  };
+
+  const getSeasonalTheme = () => {
+    const currentDate = new Date();
+    const currentMonth = currentDate.getMonth();
+    const currentDay = currentDate.getDate();
+    const isFestivePeriod =
+      (currentMonth === 11 && currentDay >= 24) || (currentMonth === 0 && currentDay <= 8);
+    return isFestivePeriod ? 'festif' : 'normal';
+  };
+
+  const getInitialThemePreference = () => getStoredThemePreference() ?? getSeasonalTheme();
+
+  const [themePreference, setThemePreference] = useState(getInitialThemePreference);
+
+  const today = useMemo(() => new Date(), []);
+  const year = today.getFullYear();
+  const isFestiveThemeActive = themePreference === 'festif';
+
+  useEffect(() => {
+    const root = document.documentElement;
+    if (isFestiveThemeActive) {
+      root.setAttribute('data-theme', 'new-year');
+    } else {
+      root.removeAttribute('data-theme');
+    }
+
+    return () => {
+      root.removeAttribute('data-theme');
+    };
+  }, [isFestiveThemeActive]);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      window.localStorage.setItem(THEME_STORAGE_KEY, themePreference);
+    }
+  }, [themePreference]);
 
   useEffect(() => {
     const fetchMessages = async () => {
@@ -124,7 +176,52 @@ const App = () => {
 
   return (
     <div className="app">
-      <div className="version-badge">v0.12</div>
+      <div className="version-badge">v0.13</div>
+      <button
+        className="settings-button"
+        type="button"
+        aria-label="Ouvrir les réglages"
+        aria-expanded={isSettingsOpen}
+        aria-controls="settings-panel"
+        onClick={() => setIsSettingsOpen((previous) => !previous)}
+      >
+        ⚙️
+      </button>
+      {isSettingsOpen ? (
+        <div className="settings-panel" id="settings-panel" role="dialog" aria-label="Réglages">
+          <div className="settings-panel-header">
+            <button
+              type="button"
+              className="settings-close-button"
+              aria-label="Fermer les réglages"
+              onClick={() => setIsSettingsOpen(false)}
+            >
+              ✕
+            </button>
+          </div>
+          <label className="settings-field">
+            <span>Thème</span>
+            <select
+              value={themePreference}
+              onChange={(event) => setThemePreference(event.target.value)}
+            >
+              <option value="festif">Festif</option>
+              <option value="normal">Normal</option>
+            </select>
+          </label>
+        </div>
+      ) : null}
+      {isFestiveThemeActive ? (
+        <div className="new-year-icons" aria-hidden="true">
+          <span className="icon-right">🎈</span>
+          <span className="icon-bottom">🥂</span>
+        </div>
+      ) : null}
+      {isFestiveThemeActive ? (
+        <div className="new-year-banner" role="status">
+          Bonne année {year} 🥳🍾
+        </div>
+      ) : null}
       <FiltersBar filters={filters} onChange={handleFilterChange} />
       <MessageList
         messages={filteredMessages}

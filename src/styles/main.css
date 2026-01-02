@@ -4,6 +4,19 @@
   --card-gap: 0.5rem;
   --border-radius: 8px;
   --button-size: 2.8rem;
+  --page-bg-base: #eef1f8;
+  --page-bg-spot-1: rgba(255, 212, 158, 0.26);
+  --page-bg-spot-2: rgba(172, 214, 255, 0.3);
+  --page-bg-spot-3: rgba(186, 237, 226, 0.24);
+  --page-bg-gradient-start: #f6f8fc;
+  --page-bg-gradient-mid: #edf5ff;
+  --page-bg-gradient-end: #f2faf6;
+  --page-decoration-top: rgba(255, 190, 120, 0.33);
+  --page-decoration-bottom: rgba(156, 214, 205, 0.32);
+  --page-sparkle-opacity: 0;
+  --page-festive-icon-opacity: 0;
+  --page-festive-icon-size: 2.6rem;
+  --page-festive-icon-top-offset: 1.4rem;
 
   /* Couleurs Kinés (pour les backgrounds des selects) */
   --kine-justine-bg: #E4CCFC;
@@ -32,6 +45,22 @@
   --type-autre-bg: #d3d3d3;      /* Gris clair */
 }
 
+[data-theme="new-year"] {
+  --page-bg-base: #f6efe6;
+  --page-bg-spot-1: rgba(255, 206, 142, 0.35);
+  --page-bg-spot-2: rgba(255, 170, 170, 0.28);
+  --page-bg-spot-3: rgba(255, 236, 186, 0.3);
+  --page-bg-gradient-start: #fff4e8;
+  --page-bg-gradient-mid: #fef2da;
+  --page-bg-gradient-end: #f6f4ff;
+  --page-decoration-top: rgba(255, 185, 88, 0.5);
+  --page-decoration-bottom: rgba(255, 128, 128, 0.35);
+  --page-sparkle-opacity: 0.5;
+  --page-festive-icon-opacity: 0.9;
+  --page-festive-icon-size: 3.1rem;
+  --page-festive-icon-top-offset: 1rem;
+}
+
 body {
   font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Open Sans", "Helvetica Neue", sans-serif;
   margin: 0;
@@ -39,12 +68,12 @@ body {
   padding-bottom: var(--gap);
   color: #333;
   min-height: 100vh;
-  background-color: #eef1f8;
+  background-color: var(--page-bg-base);
   background-image:
-    radial-gradient(1100px at 15% -15%, rgba(255, 212, 158, 0.26), transparent 65%),
-    radial-gradient(900px at 82% 4%, rgba(172, 214, 255, 0.3), transparent 70%),
-    radial-gradient(820px at 12% 88%, rgba(186, 237, 226, 0.24), transparent 75%),
-    linear-gradient(140deg, #f6f8fc 0%, #edf5ff 45%, #f2faf6 100%);
+    radial-gradient(1100px at 15% -15%, var(--page-bg-spot-1), transparent 65%),
+    radial-gradient(900px at 82% 4%, var(--page-bg-spot-2), transparent 70%),
+    radial-gradient(820px at 12% 88%, var(--page-bg-spot-3), transparent 75%),
+    linear-gradient(140deg, var(--page-bg-gradient-start) 0%, var(--page-bg-gradient-mid) 45%, var(--page-bg-gradient-end) 100%);
   background-attachment: fixed;
   background-repeat: no-repeat;
   position: relative;
@@ -69,13 +98,69 @@ body::after {
 body::before {
   top: -15vh;
   right: -12vw;
-  background: radial-gradient(circle, rgba(255, 190, 120, 0.33), transparent 60%);
+  background: radial-gradient(circle, var(--page-decoration-top), transparent 60%);
 }
 
 body::after {
   bottom: -18vh;
   left: -14vw;
-  background: radial-gradient(circle, rgba(156, 214, 205, 0.32), transparent 65%);
+  background: radial-gradient(circle, var(--page-decoration-bottom), transparent 65%);
+}
+
+body::before,
+body::after {
+  opacity: calc(0.35 + var(--page-sparkle-opacity));
+}
+
+[data-theme="new-year"] body {
+  background-image:
+    radial-gradient(1100px at 15% -15%, var(--page-bg-spot-1), transparent 65%),
+    radial-gradient(900px at 82% 4%, var(--page-bg-spot-2), transparent 70%),
+    radial-gradient(820px at 12% 88%, var(--page-bg-spot-3), transparent 75%),
+    repeating-radial-gradient(circle at 15% 20%, rgba(255, 240, 200, 0.35) 0 3px, transparent 3px 24px),
+    repeating-radial-gradient(circle at 85% 15%, rgba(255, 210, 150, 0.25) 0 2px, transparent 2px 22px),
+    linear-gradient(140deg, var(--page-bg-gradient-start) 0%, var(--page-bg-gradient-mid) 45%, var(--page-bg-gradient-end) 100%);
+}
+
+.new-year-banner {
+  position: sticky;
+  top: 0.35rem;
+  z-index: 2;
+  margin: 0 auto 1rem;
+  width: fit-content;
+  padding: 0.55rem 1.4rem;
+  border-radius: 999px;
+  background: linear-gradient(135deg, rgba(255, 205, 137, 0.9), rgba(255, 153, 153, 0.85));
+  color: #3b2a1a;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  box-shadow: 0 12px 25px -16px rgba(45, 21, 10, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.65);
+  text-align: center;
+}
+
+.new-year-icons {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.new-year-icons span {
+  position: absolute;
+  font-size: var(--page-festive-icon-size);
+  opacity: var(--page-festive-icon-opacity);
+  filter: drop-shadow(0 6px 12px rgba(0, 0, 0, 0.2));
+}
+
+.new-year-icons .icon-right {
+  top: var(--page-festive-icon-top-offset);
+  right: 1.2rem;
+}
+
+.new-year-icons .icon-bottom {
+  bottom: 1.4rem;
+  right: 12vw;
 }
 
 .version-badge {
@@ -90,6 +175,90 @@ body::after {
   letter-spacing: 0.18em;
   pointer-events: none;
   user-select: none;
+}
+
+.settings-button {
+  position: fixed;
+  top: 0.35rem;
+  left: 0.65rem;
+  width: 2.2rem;
+  height: 2.2rem;
+  border-radius: 50%;
+  border: 1px solid rgba(148, 163, 184, 0.55);
+  background: rgba(255, 255, 255, 0.7);
+  color: #2a3240;
+  font-size: 1.1rem;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 10px 20px -18px rgba(15, 23, 42, 0.6);
+  backdrop-filter: blur(6px);
+  z-index: 3;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.settings-button:hover {
+  background: rgba(255, 255, 255, 0.9);
+  transform: translateY(-1px);
+}
+
+.settings-panel {
+  position: fixed;
+  top: 3.2rem;
+  left: 0.65rem;
+  width: min(320px, 88vw);
+  padding: 1.1rem;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.92);
+  border: 1px solid rgba(148, 163, 184, 0.45);
+  box-shadow: 0 18px 40px -22px rgba(15, 23, 42, 0.6);
+  z-index: 3;
+  backdrop-filter: blur(8px);
+}
+
+.settings-panel-header {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 0.8rem;
+}
+
+.settings-close-button {
+  border: none;
+  background: none;
+  color: #1f2937;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0.2rem 0.3rem;
+}
+
+.settings-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  font-size: 0.9rem;
+  color: #334155;
+  font-weight: 600;
+}
+
+.settings-field select {
+  padding: 0.45rem 2.35rem 0.45rem 0.85rem;
+  border-radius: 999px;
+  border: 1px solid rgba(148, 163, 184, 0.45);
+  background-color: rgba(255, 255, 255, 0.85);
+  background-image:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.94), rgba(243, 246, 255, 0.82)),
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath fill='none' stroke='%2356627a' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round' d='M1 1l5 5 5-5'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.85rem center, right 0.85rem center;
+  background-size: auto, 12px 8px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #1f2937;
+  cursor: pointer;
+  appearance: none;
+  -webkit-appearance: none;
 }
 
 #filters {
