@@ -44,16 +44,25 @@ const App = () => {
     return null;
   };
 
-  const getSeasonalTheme = () => {
+  const isWithinFestivePeriod = () => {
     const currentDate = new Date();
     const currentMonth = currentDate.getMonth();
     const currentDay = currentDate.getDate();
-    const isFestivePeriod =
-      (currentMonth === 11 && currentDay >= 24) || (currentMonth === 0 && currentDay <= 8);
-    return isFestivePeriod ? 'festif' : 'normal';
+    return (
+      (currentMonth === 11 && currentDay >= 24) || (currentMonth === 0 && currentDay <= 8)
+    );
   };
 
-  const getInitialThemePreference = () => getStoredThemePreference() ?? getSeasonalTheme();
+  const getSeasonalTheme = () => (isWithinFestivePeriod() ? 'festif' : 'normal');
+
+  const getInitialThemePreference = () => {
+    const storedThemePreference = getStoredThemePreference();
+    if (storedThemePreference === 'festif' && !isWithinFestivePeriod()) {
+      return 'normal';
+    }
+
+    return storedThemePreference ?? getSeasonalTheme();
+  };
 
   const [themePreference, setThemePreference] = useState(getInitialThemePreference);
 
