@@ -37,7 +37,7 @@ const App = () => {
     }
 
     const storedTheme = window.localStorage.getItem(THEME_STORAGE_KEY);
-    if (storedTheme === 'festif' || storedTheme === 'normal') {
+    if (['festif', 'normal', 'ocean', 'coucher-soleil'].includes(storedTheme)) {
       return storedTheme;
     }
 
@@ -72,8 +72,16 @@ const App = () => {
 
   useEffect(() => {
     const root = document.documentElement;
-    if (isFestiveThemeActive) {
-      root.setAttribute('data-theme', 'new-year');
+    const themeMap = {
+      festif: 'new-year',
+      ocean: 'ocean',
+      'coucher-soleil': 'sunset',
+    };
+
+    const nextTheme = themeMap[themePreference];
+
+    if (nextTheme) {
+      root.setAttribute('data-theme', nextTheme);
     } else {
       root.removeAttribute('data-theme');
     }
@@ -81,7 +89,7 @@ const App = () => {
     return () => {
       root.removeAttribute('data-theme');
     };
-  }, [isFestiveThemeActive]);
+  }, [themePreference]);
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -216,6 +224,8 @@ const App = () => {
             >
               <option value="festif">Festif</option>
               <option value="normal">Normal</option>
+              <option value="ocean">Océan</option>
+              <option value="coucher-soleil">Coucher de soleil</option>
             </select>
           </label>
         </div>
