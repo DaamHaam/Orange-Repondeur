@@ -272,7 +272,7 @@ const App = () => {
 
   return (
     <div className="app">
-      <div className="version-badge">v0.18</div>
+      <div className="version-badge">v0.19</div>
       <button
         className="settings-button"
         type="button"

@@ -55,13 +55,13 @@ const FiltersBar = ({
           >
             i
             <span className="mailbox-meter-tooltip" role="tooltip">
-              Videz d’abord la messagerie Orange, puis cliquez sur « J&apos;ai vidé le répondeur orange » pour remettre le compteur à zéro dans l’application.
+              Videz d’abord la messagerie Orange, puis cliquez sur « J&apos;ai vidé le répondeur Orange » pour remettre le compteur à zéro dans l’application.
             </span>
           </span>
         </div>
         {isAlert ? <p className="mailbox-meter-alert">Vider le répondeur Orange.</p> : null}
         <button type="button" onClick={onResetMailbox} disabled={isResettingMailbox}>
-          {isResettingMailbox ? 'Remise à zéro…' : "J&apos;ai vidé le répondeur orange"}
+          {isResettingMailbox ? 'Remise à zéro…' : "J'ai vidé le répondeur Orange"}
         </button>
         {resetStatus ? (
           <p className={`mailbox-meter-reset ${resetStatus.type}`}>{resetStatus.message}</p>

@@ -1029,11 +1029,6 @@ select.type-Autre {
     margin-right: 0;
   }
 
-  .mailbox-meter {
-    width: 100%;
-    align-items: flex-start;
-  }
-
   #filters select {
     width: 100%;
   }
