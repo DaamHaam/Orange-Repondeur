@@ -51,15 +51,17 @@ const FiltersBar = ({
           </span>
           <span
             className="mailbox-meter-info"
-            title="Videz d’abord la messagerie Orange, puis cliquez ici pour remettre le compteur à zéro dans l’application."
             aria-label="Information sur la remise à zéro du compteur Orange"
           >
             i
+            <span className="mailbox-meter-tooltip" role="tooltip">
+              Videz d’abord la messagerie Orange, puis cliquez sur « J&apos;ai vidé le répondeur orange » pour remettre le compteur à zéro dans l’application.
+            </span>
           </span>
         </div>
         {isAlert ? <p className="mailbox-meter-alert">Vider le répondeur Orange.</p> : null}
         <button type="button" onClick={onResetMailbox} disabled={isResettingMailbox}>
-          {isResettingMailbox ? 'Remise à zéro…' : 'Répondeur Orange vidé'}
+          {isResettingMailbox ? 'Remise à zéro…' : "J&apos;ai vidé le répondeur orange"}
         </button>
         {resetStatus ? (
           <p className={`mailbox-meter-reset ${resetStatus.type}`}>{resetStatus.message}</p>

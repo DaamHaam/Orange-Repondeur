@@ -296,7 +296,7 @@ body::after {
   align-items: flex-start;
   width: min(1380px, 98vw);
   margin: 0 auto var(--gap);
-  padding: 0 0.75rem;
+  padding: 0 0.75rem 0 3.3rem;
   box-sizing: border-box;
 }
 
@@ -343,6 +343,7 @@ body::after {
 
 .mailbox-meter {
   display: flex;
+  margin-right: 1rem;
   flex-direction: column;
   gap: 0.35rem;
   align-items: flex-end;
@@ -374,6 +375,39 @@ body::after {
   align-items: center;
   justify-content: center;
   cursor: help;
+}
+
+
+.mailbox-meter-info {
+  position: relative;
+}
+
+.mailbox-meter-tooltip {
+  position: absolute;
+  top: 140%;
+  right: 0;
+  width: min(280px, 70vw);
+  padding: 0.45rem 0.55rem;
+  border-radius: 8px;
+  background: #1f2937;
+  color: #f8fafc;
+  font-size: 0.72rem;
+  line-height: 1.35;
+  font-weight: 500;
+  box-shadow: 0 12px 24px -14px rgba(2, 6, 23, 0.9);
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(-4px);
+  transition: opacity 0.2s ease, transform 0.2s ease;
+  z-index: 6;
+  pointer-events: none;
+}
+
+.mailbox-meter-info:hover .mailbox-meter-tooltip,
+.mailbox-meter-info:focus-visible .mailbox-meter-tooltip {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
 }
 
 .mailbox-meter button {
@@ -986,6 +1020,13 @@ select.type-Autre {
   #filters {
     flex-direction: column;
     align-items: stretch;
+    padding-left: 0.75rem;
+  }
+
+  .mailbox-meter {
+    width: 100%;
+    align-items: flex-start;
+    margin-right: 0;
   }
 
   .mailbox-meter {
