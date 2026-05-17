@@ -26,6 +26,10 @@ const THEME_STORAGE_KEY = 'themePreference';
 
 const App = () => {
   const [messages, setMessages] = useState([]);
+  const [mailboxMeter, setMailboxMeter] = useState(null);
+  const [mailboxError, setMailboxError] = useState(null);
+  const [isResettingMailbox, setIsResettingMailbox] = useState(false);
+  const [mailboxResetStatus, setMailboxResetStatus] = useState(null);
   const [filters, setFilters] = useState(defaultFilters);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -117,8 +121,83 @@ const App = () => {
       setLoading(false);
     };
 
+    const fetchMailboxMeter = async () => {
+      const { data, error: meterError } = await supabase
+        .from('app_mailbox_meter')
+        .select('mailbox_key, provider, capacity, threshold, count, last_reset, updated_at')
+        .eq('mailbox_key', 'orange_voicemail')
+        .maybeSingle();
+
+      if (meterError) {
+        setMailboxError(
+          `Compteur Orange indisponible: ${meterError.message}. Vérifiez les policies RLS sur app_mailbox_meter.`,
+        );
+        setMailboxMeter(null);
+      } else {
+        setMailboxError(null);
+        setMailboxMeter(data);
+      }
+    };
+
     fetchMessages();
+    fetchMailboxMeter();
   }, []);
+
+  const refreshMailboxMeter = async () => {
+    const { data, error: meterError } = await supabase
+      .from('app_mailbox_meter')
+      .select('mailbox_key, provider, capacity, threshold, count, last_reset, updated_at')
+      .eq('mailbox_key', 'orange_voicemail')
+      .maybeSingle();
+
+    if (meterError) {
+      setMailboxError(
+        `Compteur Orange indisponible: ${meterError.message}. Vérifiez les policies RLS sur app_mailbox_meter.`,
+      );
+      return;
+    }
+
+    setMailboxError(null);
+    setMailboxMeter(data);
+  };
+
+  const handleResetMailboxCounter = async () => {
+    setIsResettingMailbox(true);
+    setMailboxResetStatus(null);
+
+    try {
+      const response = await fetch(
+        'https://n8n.srv801217.hstgr.cloud/webhook/reset-orange-counter',
+        {
+          method: 'POST',
+        },
+      );
+
+      const payload = await response.json();
+
+      if (!response.ok || !payload?.ok) {
+        throw new Error(payload?.message || 'Réponse invalide du webhook');
+      }
+
+      setMailboxResetStatus({ type: 'success', message: 'Remis à zéro.' });
+      setMailboxMeter((previous) =>
+        previous
+          ? {
+              ...previous,
+              count: 0,
+            }
+          : previous,
+      );
+      await refreshMailboxMeter();
+    } catch (resetError) {
+      setMailboxResetStatus({
+        type: 'error',
+        message: 'Impossible de remettre le compteur à zéro. Réessayez.',
+      });
+    } finally {
+      setIsResettingMailbox(false);
+    }
+  };
 
   const filteredMessages = useMemo(
     () => sortMessages(applyFilters(messages, filters)),
@@ -193,7 +272,7 @@ const App = () => {
 
   return (
     <div className="app">
-      <div className="version-badge">v0.15</div>
+      <div className="version-badge">v0.18</div>
       <button
         className="settings-button"
         type="button"
@@ -241,7 +320,15 @@ const App = () => {
           Bonne année {year} 🥳🍾
         </div>
       ) : null}
-      <FiltersBar filters={filters} onChange={handleFilterChange} />
+      <FiltersBar
+        filters={filters}
+        onChange={handleFilterChange}
+        mailboxMeter={mailboxMeter}
+        mailboxError={mailboxError}
+        resetStatus={mailboxResetStatus}
+        onResetMailbox={handleResetMailboxCounter}
+        isResettingMailbox={isResettingMailbox}
+      />
       <MessageList
         messages={filteredMessages}
         loading={loading}
