@@ -34,6 +34,11 @@ const App = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [session, setSession] = useState(null);
+  const [authLoading, setAuthLoading] = useState(true);
+  const [authError, setAuthError] = useState(null);
+  const [isSigningIn, setIsSigningIn] = useState(false);
+  const [isSigningOut, setIsSigningOut] = useState(false);
 
   const getStoredThemePreference = () => {
     if (typeof window === 'undefined') {
@@ -101,7 +106,52 @@ const App = () => {
     }
   }, [themePreference]);
 
+
   useEffect(() => {
+    let isMounted = true;
+
+    const loadSession = async () => {
+      const { data, error: sessionError } = await supabase.auth.getSession();
+
+      if (!isMounted) {
+        return;
+      }
+
+      if (sessionError) {
+        setAuthError(`Erreur de récupération de session: ${sessionError.message}`);
+        setSession(null);
+      } else {
+        setAuthError(null);
+        setSession(data.session);
+      }
+
+      setAuthLoading(false);
+    };
+
+    loadSession();
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, currentSession) => {
+      setSession(currentSession);
+      setAuthError(null);
+      setAuthLoading(false);
+    });
+
+    return () => {
+      isMounted = false;
+      subscription.unsubscribe();
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!session) {
+      setMessages([]);
+      setMailboxMeter(null);
+      setLoading(false);
+      return;
+    }
+
     const fetchMessages = async () => {
       setLoading(true);
       setError(null);
@@ -141,7 +191,7 @@ const App = () => {
 
     fetchMessages();
     fetchMailboxMeter();
-  }, []);
+  }, [session]);
 
   const refreshMailboxMeter = async () => {
     const { data, error: meterError } = await supabase
@@ -203,6 +253,43 @@ const App = () => {
     () => sortMessages(applyFilters(messages, filters)),
     [messages, filters],
   );
+
+  const handleSignInWithGoogle = async () => {
+    setIsSigningIn(true);
+    setAuthError(null);
+
+    const redirectTo = typeof window !== 'undefined' ? window.location.href : undefined;
+    const { error: signInError } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: {
+        redirectTo,
+      },
+    });
+
+    if (signInError) {
+      setAuthError(`Erreur de connexion Google: ${signInError.message}`);
+      setIsSigningIn(false);
+    }
+  };
+
+  const handleSignOut = async () => {
+    setIsSigningOut(true);
+    setAuthError(null);
+
+    const { error: signOutError } = await supabase.auth.signOut();
+
+    if (signOutError) {
+      setAuthError(`Erreur de déconnexion: ${signOutError.message}`);
+    } else {
+      setSession(null);
+      setMessages([]);
+      setMailboxMeter(null);
+    }
+
+    setIsSigningOut(false);
+  };
+
+  const userEmail = session?.user?.email;
 
   const handleFilterChange = (name, value) => {
     setFilters((previous) => ({ ...previous, [name]: value }));
@@ -320,24 +407,50 @@ const App = () => {
           Bonne année {year} 🥳🍾
         </div>
       ) : null}
-      <FiltersBar
-        filters={filters}
-        onChange={handleFilterChange}
-        mailboxMeter={mailboxMeter}
-        mailboxError={mailboxError}
-        resetStatus={mailboxResetStatus}
-        onResetMailbox={handleResetMailboxCounter}
-        isResettingMailbox={isResettingMailbox}
-      />
-      <MessageList
-        messages={filteredMessages}
-        loading={loading}
-        error={error}
-        hasMessages={messages.length > 0}
-        onAssignKine={handleAssignKine}
-        onUpdateType={handleUpdateType}
-        onDelete={handleDelete}
-      />
+      {authLoading ? (
+        <section className="auth-card" aria-live="polite">
+          <p>Vérification de la session...</p>
+        </section>
+      ) : session ? (
+        <>
+          <div className="session-bar">
+            <span>Connecté{userEmail ? ` avec ${userEmail}` : ''}</span>
+            <button type="button" onClick={handleSignOut} disabled={isSigningOut}>
+              {isSigningOut ? 'Déconnexion...' : 'Se déconnecter'}
+            </button>
+          </div>
+          <FiltersBar
+            filters={filters}
+            onChange={handleFilterChange}
+            mailboxMeter={mailboxMeter}
+            mailboxError={mailboxError}
+            resetStatus={mailboxResetStatus}
+            onResetMailbox={handleResetMailboxCounter}
+            isResettingMailbox={isResettingMailbox}
+          />
+          <MessageList
+            messages={filteredMessages}
+            loading={loading}
+            error={error}
+            hasMessages={messages.length > 0}
+            onAssignKine={handleAssignKine}
+            onUpdateType={handleUpdateType}
+            onDelete={handleDelete}
+          />
+        </>
+      ) : (
+        <section className="auth-card" aria-labelledby="auth-title">
+          <p className="auth-eyebrow">Accès sécurisé</p>
+          <h1 id="auth-title">Connexion au répondeur Orange</h1>
+          <p>
+            Connectez-vous avec votre compte Google pour consulter et gérer les messages.
+          </p>
+          <button type="button" className="google-signin-button" onClick={handleSignInWithGoogle} disabled={isSigningIn}>
+            {isSigningIn ? 'Redirection...' : 'Se connecter avec Google'}
+          </button>
+          {authError ? <p className="auth-error">{authError}</p> : null}
+        </section>
+      )}
     </div>
   );
 };
