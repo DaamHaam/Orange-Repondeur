@@ -359,42 +359,53 @@ const App = () => {
 
   return (
     <div className="app">
-      <div className="version-badge">v0.19</div>
-      <button
-        className="settings-button"
-        type="button"
-        aria-label="Ouvrir les réglages"
-        aria-expanded={isSettingsOpen}
-        aria-controls="settings-panel"
-        onClick={() => setIsSettingsOpen((previous) => !previous)}
-      >
-        ⚙️
-      </button>
-      {isSettingsOpen ? (
-        <div className="settings-panel" id="settings-panel" role="dialog" aria-label="Réglages">
-          <div className="settings-panel-header">
-            <button
-              type="button"
-              className="settings-close-button"
-              aria-label="Fermer les réglages"
-              onClick={() => setIsSettingsOpen(false)}
-            >
-              ✕
-            </button>
-          </div>
-          <label className="settings-field">
-            <span>Thème</span>
-            <select
-              value={themePreference}
-              onChange={(event) => setThemePreference(event.target.value)}
-            >
-              <option value="festif">Festif</option>
-              <option value="normal">Normal</option>
-              <option value="ocean">Océan</option>
-              <option value="coucher-soleil">Coucher de soleil</option>
-            </select>
-          </label>
-        </div>
+      <div className="version-badge">v0.20</div>
+      {session ? (
+        <>
+          <button
+            className="settings-button"
+            type="button"
+            aria-label="Ouvrir les réglages"
+            aria-expanded={isSettingsOpen}
+            aria-controls="settings-panel"
+            onClick={() => setIsSettingsOpen((previous) => !previous)}
+          >
+            ⚙️
+          </button>
+          {isSettingsOpen ? (
+            <div className="settings-panel" id="settings-panel" role="dialog" aria-label="Réglages">
+              <div className="settings-panel-header">
+                <button
+                  type="button"
+                  className="settings-close-button"
+                  aria-label="Fermer les réglages"
+                  onClick={() => setIsSettingsOpen(false)}
+                >
+                  ✕
+                </button>
+              </div>
+              <div className="settings-account">
+                <span className="settings-account-label">Compte connecté</span>
+                <span className="settings-account-email">{userEmail || 'Compte Google'}</span>
+                <button type="button" onClick={handleSignOut} disabled={isSigningOut}>
+                  {isSigningOut ? 'Déconnexion...' : 'Se déconnecter'}
+                </button>
+              </div>
+              <label className="settings-field">
+                <span>Thème</span>
+                <select
+                  value={themePreference}
+                  onChange={(event) => setThemePreference(event.target.value)}
+                >
+                  <option value="festif">Festif</option>
+                  <option value="normal">Normal</option>
+                  <option value="ocean">Océan</option>
+                  <option value="coucher-soleil">Coucher de soleil</option>
+                </select>
+              </label>
+            </div>
+          ) : null}
+        </>
       ) : null}
       {isFestiveThemeActive ? (
         <div className="new-year-icons" aria-hidden="true">
@@ -413,12 +424,6 @@ const App = () => {
         </section>
       ) : session ? (
         <>
-          <div className="session-bar">
-            <span>Connecté{userEmail ? ` avec ${userEmail}` : ''}</span>
-            <button type="button" onClick={handleSignOut} disabled={isSigningOut}>
-              {isSigningOut ? 'Déconnexion...' : 'Se déconnecter'}
-            </button>
-          </div>
           <FiltersBar
             filters={filters}
             onChange={handleFilterChange}
@@ -440,13 +445,14 @@ const App = () => {
         </>
       ) : (
         <section className="auth-card" aria-labelledby="auth-title">
-          <p className="auth-eyebrow">Accès sécurisé</p>
-          <h1 id="auth-title">Connexion au répondeur Orange</h1>
-          <p>
-            Connectez-vous avec votre compte Google pour consulter et gérer les messages.
-          </p>
-          <button type="button" className="google-signin-button" onClick={handleSignInWithGoogle} disabled={isSigningIn}>
-            {isSigningIn ? 'Redirection...' : 'Se connecter avec Google'}
+          <button
+            type="button"
+            id="auth-title"
+            className="google-signin-button"
+            onClick={handleSignInWithGoogle}
+            disabled={isSigningIn}
+          >
+            {isSigningIn ? 'Redirection...' : 'Se connecter avec votre compte Google'}
           </button>
           {authError ? <p className="auth-error">{authError}</p> : null}
         </section>
