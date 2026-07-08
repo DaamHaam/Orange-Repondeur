@@ -26,10 +26,19 @@ const THEME_STORAGE_KEY = 'themePreference';
 
 const App = () => {
   const [messages, setMessages] = useState([]);
+  const [mailboxMeter, setMailboxMeter] = useState(null);
+  const [mailboxError, setMailboxError] = useState(null);
+  const [isResettingMailbox, setIsResettingMailbox] = useState(false);
+  const [mailboxResetStatus, setMailboxResetStatus] = useState(null);
   const [filters, setFilters] = useState(defaultFilters);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [session, setSession] = useState(null);
+  const [authLoading, setAuthLoading] = useState(true);
+  const [authError, setAuthError] = useState(null);
+  const [isSigningIn, setIsSigningIn] = useState(false);
+  const [isSigningOut, setIsSigningOut] = useState(false);
 
   const getStoredThemePreference = () => {
     if (typeof window === 'undefined') {
@@ -37,7 +46,7 @@ const App = () => {
     }
 
     const storedTheme = window.localStorage.getItem(THEME_STORAGE_KEY);
-    if (storedTheme === 'festif' || storedTheme === 'normal') {
+    if (['festif', 'normal', 'ocean', 'coucher-soleil'].includes(storedTheme)) {
       return storedTheme;
     }
 
@@ -72,8 +81,16 @@ const App = () => {
 
   useEffect(() => {
     const root = document.documentElement;
-    if (isFestiveThemeActive) {
-      root.setAttribute('data-theme', 'new-year');
+    const themeMap = {
+      festif: 'new-year',
+      ocean: 'ocean',
+      'coucher-soleil': 'sunset',
+    };
+
+    const nextTheme = themeMap[themePreference];
+
+    if (nextTheme) {
+      root.setAttribute('data-theme', nextTheme);
     } else {
       root.removeAttribute('data-theme');
     }
@@ -81,7 +98,7 @@ const App = () => {
     return () => {
       root.removeAttribute('data-theme');
     };
-  }, [isFestiveThemeActive]);
+  }, [themePreference]);
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -89,7 +106,52 @@ const App = () => {
     }
   }, [themePreference]);
 
+
   useEffect(() => {
+    let isMounted = true;
+
+    const loadSession = async () => {
+      const { data, error: sessionError } = await supabase.auth.getSession();
+
+      if (!isMounted) {
+        return;
+      }
+
+      if (sessionError) {
+        setAuthError(`Erreur de récupération de session: ${sessionError.message}`);
+        setSession(null);
+      } else {
+        setAuthError(null);
+        setSession(data.session);
+      }
+
+      setAuthLoading(false);
+    };
+
+    loadSession();
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, currentSession) => {
+      setSession(currentSession);
+      setAuthError(null);
+      setAuthLoading(false);
+    });
+
+    return () => {
+      isMounted = false;
+      subscription.unsubscribe();
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!session) {
+      setMessages([]);
+      setMailboxMeter(null);
+      setLoading(false);
+      return;
+    }
+
     const fetchMessages = async () => {
       setLoading(true);
       setError(null);
@@ -109,13 +171,125 @@ const App = () => {
       setLoading(false);
     };
 
+    const fetchMailboxMeter = async () => {
+      const { data, error: meterError } = await supabase
+        .from('app_mailbox_meter')
+        .select('mailbox_key, provider, capacity, threshold, count, last_reset, updated_at')
+        .eq('mailbox_key', 'orange_voicemail')
+        .maybeSingle();
+
+      if (meterError) {
+        setMailboxError(
+          `Compteur Orange indisponible: ${meterError.message}. Vérifiez les policies RLS sur app_mailbox_meter.`,
+        );
+        setMailboxMeter(null);
+      } else {
+        setMailboxError(null);
+        setMailboxMeter(data);
+      }
+    };
+
     fetchMessages();
-  }, []);
+    fetchMailboxMeter();
+  }, [session]);
+
+  const refreshMailboxMeter = async () => {
+    const { data, error: meterError } = await supabase
+      .from('app_mailbox_meter')
+      .select('mailbox_key, provider, capacity, threshold, count, last_reset, updated_at')
+      .eq('mailbox_key', 'orange_voicemail')
+      .maybeSingle();
+
+    if (meterError) {
+      setMailboxError(
+        `Compteur Orange indisponible: ${meterError.message}. Vérifiez les policies RLS sur app_mailbox_meter.`,
+      );
+      return;
+    }
+
+    setMailboxError(null);
+    setMailboxMeter(data);
+  };
+
+  const handleResetMailboxCounter = async () => {
+    setIsResettingMailbox(true);
+    setMailboxResetStatus(null);
+
+    try {
+      const response = await fetch(
+        'https://n8n.srv801217.hstgr.cloud/webhook/reset-orange-counter',
+        {
+          method: 'POST',
+        },
+      );
+
+      const payload = await response.json();
+
+      if (!response.ok || !payload?.ok) {
+        throw new Error(payload?.message || 'Réponse invalide du webhook');
+      }
+
+      setMailboxResetStatus({ type: 'success', message: 'Remis à zéro.' });
+      setMailboxMeter((previous) =>
+        previous
+          ? {
+              ...previous,
+              count: 0,
+            }
+          : previous,
+      );
+      await refreshMailboxMeter();
+    } catch (resetError) {
+      setMailboxResetStatus({
+        type: 'error',
+        message: 'Impossible de remettre le compteur à zéro. Réessayez.',
+      });
+    } finally {
+      setIsResettingMailbox(false);
+    }
+  };
 
   const filteredMessages = useMemo(
     () => sortMessages(applyFilters(messages, filters)),
     [messages, filters],
   );
+
+  const handleSignInWithGoogle = async () => {
+    setIsSigningIn(true);
+    setAuthError(null);
+
+    const redirectTo = typeof window !== 'undefined' ? window.location.href : undefined;
+    const { error: signInError } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: {
+        redirectTo,
+      },
+    });
+
+    if (signInError) {
+      setAuthError(`Erreur de connexion Google: ${signInError.message}`);
+      setIsSigningIn(false);
+    }
+  };
+
+  const handleSignOut = async () => {
+    setIsSigningOut(true);
+    setAuthError(null);
+
+    const { error: signOutError } = await supabase.auth.signOut();
+
+    if (signOutError) {
+      setAuthError(`Erreur de déconnexion: ${signOutError.message}`);
+    } else {
+      setSession(null);
+      setMessages([]);
+      setMailboxMeter(null);
+    }
+
+    setIsSigningOut(false);
+  };
+
+  const userEmail = session?.user?.email;
 
   const handleFilterChange = (name, value) => {
     setFilters((previous) => ({ ...previous, [name]: value }));
@@ -185,40 +359,53 @@ const App = () => {
 
   return (
     <div className="app">
-      <div className="version-badge">v0.15</div>
-      <button
-        className="settings-button"
-        type="button"
-        aria-label="Ouvrir les réglages"
-        aria-expanded={isSettingsOpen}
-        aria-controls="settings-panel"
-        onClick={() => setIsSettingsOpen((previous) => !previous)}
-      >
-        ⚙️
-      </button>
-      {isSettingsOpen ? (
-        <div className="settings-panel" id="settings-panel" role="dialog" aria-label="Réglages">
-          <div className="settings-panel-header">
-            <button
-              type="button"
-              className="settings-close-button"
-              aria-label="Fermer les réglages"
-              onClick={() => setIsSettingsOpen(false)}
-            >
-              ✕
-            </button>
-          </div>
-          <label className="settings-field">
-            <span>Thème</span>
-            <select
-              value={themePreference}
-              onChange={(event) => setThemePreference(event.target.value)}
-            >
-              <option value="festif">Festif</option>
-              <option value="normal">Normal</option>
-            </select>
-          </label>
-        </div>
+      <div className="version-badge">v0.20</div>
+      {session ? (
+        <>
+          <button
+            className="settings-button"
+            type="button"
+            aria-label="Ouvrir les réglages"
+            aria-expanded={isSettingsOpen}
+            aria-controls="settings-panel"
+            onClick={() => setIsSettingsOpen((previous) => !previous)}
+          >
+            ⚙️
+          </button>
+          {isSettingsOpen ? (
+            <div className="settings-panel" id="settings-panel" role="dialog" aria-label="Réglages">
+              <div className="settings-panel-header">
+                <button
+                  type="button"
+                  className="settings-close-button"
+                  aria-label="Fermer les réglages"
+                  onClick={() => setIsSettingsOpen(false)}
+                >
+                  ✕
+                </button>
+              </div>
+              <div className="settings-account">
+                <span className="settings-account-label">Compte connecté</span>
+                <span className="settings-account-email">{userEmail || 'Compte Google'}</span>
+                <button type="button" onClick={handleSignOut} disabled={isSigningOut}>
+                  {isSigningOut ? 'Déconnexion...' : 'Se déconnecter'}
+                </button>
+              </div>
+              <label className="settings-field">
+                <span>Thème</span>
+                <select
+                  value={themePreference}
+                  onChange={(event) => setThemePreference(event.target.value)}
+                >
+                  <option value="festif">Festif</option>
+                  <option value="normal">Normal</option>
+                  <option value="ocean">Océan</option>
+                  <option value="coucher-soleil">Coucher de soleil</option>
+                </select>
+              </label>
+            </div>
+          ) : null}
+        </>
       ) : null}
       {isFestiveThemeActive ? (
         <div className="new-year-icons" aria-hidden="true">
@@ -231,16 +418,45 @@ const App = () => {
           Bonne année {year} 🥳🍾
         </div>
       ) : null}
-      <FiltersBar filters={filters} onChange={handleFilterChange} />
-      <MessageList
-        messages={filteredMessages}
-        loading={loading}
-        error={error}
-        hasMessages={messages.length > 0}
-        onAssignKine={handleAssignKine}
-        onUpdateType={handleUpdateType}
-        onDelete={handleDelete}
-      />
+      {authLoading ? (
+        <section className="auth-card" aria-live="polite">
+          <p>Vérification de la session...</p>
+        </section>
+      ) : session ? (
+        <>
+          <FiltersBar
+            filters={filters}
+            onChange={handleFilterChange}
+            mailboxMeter={mailboxMeter}
+            mailboxError={mailboxError}
+            resetStatus={mailboxResetStatus}
+            onResetMailbox={handleResetMailboxCounter}
+            isResettingMailbox={isResettingMailbox}
+          />
+          <MessageList
+            messages={filteredMessages}
+            loading={loading}
+            error={error}
+            hasMessages={messages.length > 0}
+            onAssignKine={handleAssignKine}
+            onUpdateType={handleUpdateType}
+            onDelete={handleDelete}
+          />
+        </>
+      ) : (
+        <section className="auth-card" aria-labelledby="auth-title">
+          <button
+            type="button"
+            id="auth-title"
+            className="google-signin-button"
+            onClick={handleSignInWithGoogle}
+            disabled={isSigningIn}
+          >
+            {isSigningIn ? 'Redirection...' : 'Se connecter avec votre compte Google'}
+          </button>
+          {authError ? <p className="auth-error">{authError}</p> : null}
+        </section>
+      )}
     </div>
   );
 };

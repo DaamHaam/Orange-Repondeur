@@ -61,6 +61,33 @@
   --page-festive-icon-top-offset: 1rem;
 }
 
+
+[data-theme="ocean"] {
+  --page-bg-base: #e8f4ff;
+  --page-bg-spot-1: rgba(124, 216, 255, 0.32);
+  --page-bg-spot-2: rgba(104, 167, 255, 0.3);
+  --page-bg-spot-3: rgba(144, 235, 229, 0.28);
+  --page-bg-gradient-start: #edf8ff;
+  --page-bg-gradient-mid: #dff2ff;
+  --page-bg-gradient-end: #e9fff7;
+  --page-decoration-top: rgba(66, 153, 225, 0.42);
+  --page-decoration-bottom: rgba(45, 212, 191, 0.36);
+  --page-sparkle-opacity: 0.12;
+}
+
+[data-theme="sunset"] {
+  --page-bg-base: #fff0e8;
+  --page-bg-spot-1: rgba(255, 182, 123, 0.35);
+  --page-bg-spot-2: rgba(255, 128, 171, 0.28);
+  --page-bg-spot-3: rgba(255, 229, 153, 0.3);
+  --page-bg-gradient-start: #fff4eb;
+  --page-bg-gradient-mid: #ffe8da;
+  --page-bg-gradient-end: #fff0f8;
+  --page-decoration-top: rgba(251, 146, 60, 0.45);
+  --page-decoration-bottom: rgba(236, 72, 153, 0.34);
+  --page-sparkle-opacity: 0.1;
+}
+
 body {
   font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Open Sans", "Helvetica Neue", sans-serif;
   margin: 0;
@@ -233,13 +260,56 @@ body::after {
   padding: 0.2rem 0.3rem;
 }
 
-.settings-field {
+.settings-field,
+.settings-account {
   display: flex;
   flex-direction: column;
   gap: 0.45rem;
   font-size: 0.9rem;
   color: #334155;
   font-weight: 600;
+}
+
+.settings-account {
+  margin-bottom: 1rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.28);
+}
+
+.settings-account-label {
+  color: #64748b;
+  font-size: 0.76rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.settings-account-email {
+  color: #1f2937;
+  overflow-wrap: anywhere;
+}
+
+.settings-account button {
+  align-self: flex-start;
+  margin-top: 0.25rem;
+  padding: 0.45rem 0.8rem;
+  border: 1px solid rgba(148, 163, 184, 0.5);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.88);
+  color: #1f2937;
+  font-size: 0.78rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, opacity 0.2s ease;
+}
+
+.settings-account button:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 18px 34px -26px rgba(15, 23, 42, 0.9);
+}
+
+.settings-account button:disabled {
+  cursor: wait;
+  opacity: 0.65;
 }
 
 .settings-field select {
@@ -265,9 +335,18 @@ body::after {
   display: flex;
   flex-wrap: wrap;
   gap: 0.85rem;
-  justify-content: center;
-  margin-bottom: var(--gap);
-  padding: 0 0.5rem;
+  justify-content: space-between;
+  align-items: flex-start;
+  width: min(1380px, 98vw);
+  margin: 0 auto var(--gap);
+  padding: 0 0.75rem 0 3.3rem;
+  box-sizing: border-box;
+}
+
+.filters-left {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.85rem;
 }
 
 #filters select {
@@ -303,6 +382,105 @@ body::after {
   outline: none;
   border-color: rgba(15, 118, 110, 0.5);
   box-shadow: 0 0 0 3px rgba(45, 212, 191, 0.16);
+}
+
+.mailbox-meter {
+  display: flex;
+  margin-right: 1rem;
+  flex-direction: column;
+  gap: 0.35rem;
+  align-items: flex-end;
+  padding: 0.5rem 0.7rem;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.78);
+  border: 1px solid rgba(148, 163, 184, 0.35);
+}
+
+.mailbox-meter-main {
+  display: flex;
+  gap: 0.4rem;
+  align-items: center;
+  color: #334155;
+  font-size: 0.9rem;
+}
+
+.mailbox-meter-label { font-weight: 500; }
+.mailbox-meter-value { font-weight: 700; }
+
+.mailbox-meter-info {
+  width: 1rem;
+  height: 1rem;
+  border-radius: 50%;
+  background: #e2e8f0;
+  color: #334155;
+  font-size: 0.7rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: help;
+}
+
+
+.mailbox-meter-info {
+  position: relative;
+}
+
+.mailbox-meter-tooltip {
+  position: absolute;
+  top: 140%;
+  right: 0;
+  width: min(280px, 70vw);
+  padding: 0.45rem 0.55rem;
+  border-radius: 8px;
+  background: #1f2937;
+  color: #f8fafc;
+  font-size: 0.72rem;
+  line-height: 1.35;
+  font-weight: 500;
+  box-shadow: 0 12px 24px -14px rgba(2, 6, 23, 0.9);
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(-4px);
+  transition: opacity 0.2s ease, transform 0.2s ease;
+  z-index: 6;
+  pointer-events: none;
+}
+
+.mailbox-meter-info:hover .mailbox-meter-tooltip,
+.mailbox-meter-info:focus-visible .mailbox-meter-tooltip {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
+}
+
+.mailbox-meter button {
+  border: 1px solid rgba(148, 163, 184, 0.6);
+  border-radius: 999px;
+  padding: 0.35rem 0.75rem;
+  background: rgba(255, 255, 255, 0.95);
+  font-size: 0.82rem;
+  cursor: pointer;
+}
+
+.mailbox-meter-alert,
+.mailbox-meter-reset {
+  margin: 0;
+  font-size: 0.78rem;
+}
+
+.mailbox-meter.is-alert {
+  border-color: rgba(239, 68, 68, 0.5);
+  background: rgba(254, 242, 242, 0.92);
+}
+
+.mailbox-meter.is-alert .mailbox-meter-main,
+.mailbox-meter-alert,
+.mailbox-meter-reset.error {
+  color: #b91c1c;
+}
+
+.mailbox-meter-reset.success {
+  color: #166534;
 }
 
 #list {
@@ -885,9 +1063,79 @@ select.type-Autre {
   #filters {
     flex-direction: column;
     align-items: stretch;
+    padding-left: 0.75rem;
+  }
+
+  .mailbox-meter {
+    width: 100%;
+    align-items: flex-start;
+    margin-right: 0;
   }
 
   #filters select {
     width: 100%;
   }
 }
+
+.auth-card {
+  width: min(420px, calc(100vw - 2rem));
+  margin: clamp(4rem, 24vh, 11rem) auto 0;
+  padding: 0;
+  box-sizing: border-box;
+  text-align: center;
+}
+
+.auth-eyebrow {
+  margin: 0 0 0.45rem;
+  color: #64748b;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.auth-card h1 {
+  margin: 0 0 0.75rem;
+  color: #1f2937;
+  font-size: clamp(1.6rem, 5vw, 2.2rem);
+  line-height: 1.1;
+}
+
+.auth-card p {
+  color: #475569;
+  line-height: 1.5;
+}
+
+.google-signin-button {
+  border: 1px solid rgba(148, 163, 184, 0.5);
+  border-radius: 999px;
+  background: #fff;
+  color: #1f2937;
+  font-weight: 700;
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, opacity 0.2s ease;
+}
+
+.google-signin-button {
+  margin-top: 0.85rem;
+  padding: 0.85rem 1.25rem;
+  box-shadow: 0 16px 34px -26px rgba(15, 23, 42, 0.9);
+}
+
+.google-signin-button:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 18px 34px -26px rgba(15, 23, 42, 0.9);
+}
+
+.google-signin-button:disabled {
+  cursor: wait;
+  opacity: 0.65;
+  transform: none;
+}
+
+.auth-error {
+  margin: 1rem 0 0;
+  color: #b91c1c;
+  font-weight: 600;
+}
+

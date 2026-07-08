@@ -62,14 +62,17 @@ const MessageCard = ({ message, onAssignKine, onUpdateType, onDelete }) => {
     return message.transcript.replace(/\*\*(.*?)\*\*/g, '$1');
   }, [message.transcript]);
 
+  const callerInfoText = useMemo(() => {
+    return [message.phone, message.name].filter(Boolean).join(' ').trim();
+  }, [message.phone, message.name]);
+
+  const transcriptCopyText = useMemo(() => {
+    return [callerInfoText, transcriptText].filter(Boolean).join(' – ');
+  }, [callerInfoText, transcriptText]);
+
   const summaryText = useMemo(() => {
-    let summary = message.phone || '';
-    if (message.name) {
-      summary += ` ${message.name}`;
-    }
-    summary += ` – ${message.resume || 'Pas de résumé.'}`;
-    return summary.trim();
-  }, [message.phone, message.name, message.resume]);
+    return [callerInfoText, message.resume || 'Pas de résumé.'].filter(Boolean).join(' – ');
+  }, [callerInfoText, message.resume]);
 
   const handleKineChange = async (event) => {
     const newValue = event.target.value;
@@ -120,7 +123,7 @@ const MessageCard = ({ message, onAssignKine, onUpdateType, onDelete }) => {
       return;
     }
     try {
-      await copyToClipboard(transcriptText);
+      await copyToClipboard(transcriptCopyText);
       setTranscriptCopied(true);
       setTimeout(() => setTranscriptCopied(false), COPY_TIMEOUT);
     } catch (copyError) {
