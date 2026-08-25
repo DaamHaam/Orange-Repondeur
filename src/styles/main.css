@@ -1106,6 +1106,19 @@ select.type-Autre {
   line-height: 1.5;
 }
 
+.unauthorized-card {
+  padding: 2rem;
+  border: 1px solid rgba(148, 163, 184, 0.45);
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.88);
+  box-shadow: 0 24px 55px -34px rgba(15, 23, 42, 0.65);
+  backdrop-filter: blur(8px);
+}
+
+.unauthorized-card h1 {
+  margin-bottom: 1.25rem;
+}
+
 .google-signin-button {
   border: 1px solid rgba(148, 163, 184, 0.5);
   border-radius: 999px;
@@ -1138,4 +1151,3 @@ select.type-Autre {
   color: #b91c1c;
   font-weight: 600;
 }
-
