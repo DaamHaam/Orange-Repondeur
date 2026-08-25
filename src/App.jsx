@@ -23,6 +23,7 @@ const sortMessages = (messages) =>
   [...messages].sort((a, b) => new Date(b.date) - new Date(a.date));
 
 const THEME_STORAGE_KEY = 'themePreference';
+const AUTHORIZED_EMAIL = 'kinecleunay@gmail.com';
 
 const App = () => {
   const [messages, setMessages] = useState([]);
@@ -39,6 +40,8 @@ const App = () => {
   const [authError, setAuthError] = useState(null);
   const [isSigningIn, setIsSigningIn] = useState(false);
   const [isSigningOut, setIsSigningOut] = useState(false);
+  const userEmail = session?.user?.email;
+  const isAuthorizedUser = userEmail?.trim().toLowerCase() === AUTHORIZED_EMAIL;
 
   const getStoredThemePreference = () => {
     if (typeof window === 'undefined') {
@@ -145,9 +148,12 @@ const App = () => {
   }, []);
 
   useEffect(() => {
-    if (!session) {
+    if (!session || !isAuthorizedUser) {
       setMessages([]);
       setMailboxMeter(null);
+      setMailboxError(null);
+      setMailboxResetStatus(null);
+      setError(null);
       setLoading(false);
       return;
     }
@@ -191,7 +197,7 @@ const App = () => {
 
     fetchMessages();
     fetchMailboxMeter();
-  }, [session]);
+  }, [session, isAuthorizedUser]);
 
   const refreshMailboxMeter = async () => {
     const { data, error: meterError } = await supabase
@@ -263,6 +269,9 @@ const App = () => {
       provider: 'google',
       options: {
         redirectTo,
+        queryParams: {
+          prompt: 'select_account',
+        },
       },
     });
 
@@ -288,8 +297,6 @@ const App = () => {
 
     setIsSigningOut(false);
   };
-
-  const userEmail = session?.user?.email;
 
   const handleFilterChange = (name, value) => {
     setFilters((previous) => ({ ...previous, [name]: value }));
@@ -359,8 +366,8 @@ const App = () => {
 
   return (
     <div className="app">
-      <div className="version-badge">v0.20</div>
-      {session ? (
+      <div className="version-badge">v0.22</div>
+      {session && isAuthorizedUser ? (
         <>
           <button
             className="settings-button"
@@ -422,7 +429,33 @@ const App = () => {
         <section className="auth-card" aria-live="polite">
           <p>Vérification de la session...</p>
         </section>
-      ) : session ? (
+      ) : !session ? (
+        <section className="auth-card" aria-labelledby="auth-title">
+          <button
+            type="button"
+            id="auth-title"
+            className="google-signin-button"
+            onClick={handleSignInWithGoogle}
+            disabled={isSigningIn}
+          >
+            {isSigningIn ? 'Redirection...' : 'Se connecter avec votre compte Google'}
+          </button>
+          {authError ? <p className="auth-error">{authError}</p> : null}
+        </section>
+      ) : !isAuthorizedUser ? (
+        <section className="auth-card unauthorized-card" aria-labelledby="unauthorized-title">
+          <h1 id="unauthorized-title">Compte non autorisé</h1>
+          <button
+            type="button"
+            className="google-signin-button"
+            onClick={handleSignOut}
+            disabled={isSigningOut}
+          >
+            {isSigningOut ? 'Déconnexion...' : 'Se déconnecter'}
+          </button>
+          {authError ? <p className="auth-error">{authError}</p> : null}
+        </section>
+      ) : (
         <>
           <FiltersBar
             filters={filters}
@@ -443,19 +476,6 @@ const App = () => {
             onDelete={handleDelete}
           />
         </>
-      ) : (
-        <section className="auth-card" aria-labelledby="auth-title">
-          <button
-            type="button"
-            id="auth-title"
-            className="google-signin-button"
-            onClick={handleSignInWithGoogle}
-            disabled={isSigningIn}
-          >
-            {isSigningIn ? 'Redirection...' : 'Se connecter avec votre compte Google'}
-          </button>
-          {authError ? <p className="auth-error">{authError}</p> : null}
-        </section>
       )}
     </div>
   );
