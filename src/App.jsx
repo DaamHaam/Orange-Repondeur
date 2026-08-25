@@ -269,6 +269,9 @@ const App = () => {
       provider: 'google',
       options: {
         redirectTo,
+        queryParams: {
+          prompt: 'select_account',
+        },
       },
     });
 
@@ -363,7 +366,7 @@ const App = () => {
 
   return (
     <div className="app">
-      <div className="version-badge">v0.21</div>
+      <div className="version-badge">v0.22</div>
       {session && isAuthorizedUser ? (
         <>
           <button
