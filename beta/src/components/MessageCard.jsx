@@ -1,0 +1,305 @@
+import { useEffect, useMemo, useState } from 'react';
+import { ICONS, KINES, MESSAGE_TYPES } from '../constants/index.jsx';
+import { useAudioController } from '../hooks/useAudioController.js';
+import {
+  copyToClipboard,
+  formatDate,
+  getCardClassByKine,
+  getCardClassByType,
+  getKineStyle,
+  getMessageTypeStyle,
+} from '../utils/index.js';
+
+const COPY_TIMEOUT = 1500;
+
+const MessageCard = ({ message, onAssignKine, onUpdateType, onDelete }) => {
+  const [selectedKine, setSelectedKine] = useState(message.prenom_kine || '');
+  const [selectedType, setSelectedType] = useState(message.message_type || 'Autre');
+  const [phoneCopied, setPhoneCopied] = useState(false);
+  const [summaryCopied, setSummaryCopied] = useState(false);
+  const [transcriptCopied, setTranscriptCopied] = useState(false);
+  const audioController = useAudioController(message.audio_path);
+
+  useEffect(() => {
+    setSelectedKine(message.prenom_kine || '');
+  }, [message.prenom_kine]);
+
+  useEffect(() => {
+    setSelectedType(message.message_type || 'Autre');
+  }, [message.message_type]);
+
+  const kineStyle = useMemo(() => getKineStyle(selectedKine), [selectedKine]);
+  const messageTypeStyle = useMemo(
+    () => getMessageTypeStyle(selectedType),
+    [selectedType],
+  );
+
+  const cardClassName = useMemo(() => {
+    const kineClass = getCardClassByKine(selectedKine);
+    const typeClass = getCardClassByType(selectedType);
+    return ['card', kineClass, typeClass].filter(Boolean).join(' ');
+  }, [selectedKine, selectedType]);
+
+  const PlayIcon = ICONS.Play;
+  const PauseIcon = ICONS.Pause;
+  const StopIcon = ICONS.Stop;
+  const DeleteIcon = ICONS.Delete;
+  const CopyIcon = ICONS.Copy;
+  const CopiedIcon = ICONS.Copied;
+  const AudioUnavailableIcon = ICONS.AudioUnavailable;
+  const isPlaying = audioController.status === 'playing';
+
+  const transcriptHtml = useMemo(() => {
+    if (!message.transcript) {
+      return '<em>Pas de transcription.</em>';
+    }
+    return message.transcript.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+  }, [message.transcript]);
+
+  const transcriptText = useMemo(() => {
+    if (!message.transcript) {
+      return '';
+    }
+    return message.transcript.replace(/\*\*(.*?)\*\*/g, '$1');
+  }, [message.transcript]);
+
+  const callerInfoText = useMemo(() => {
+    return [message.phone, message.name].filter(Boolean).join(' ').trim();
+  }, [message.phone, message.name]);
+
+  const transcriptCopyText = useMemo(() => {
+    return [callerInfoText, transcriptText].filter(Boolean).join(' – ');
+  }, [callerInfoText, transcriptText]);
+
+  const summaryText = useMemo(() => {
+    return [callerInfoText, message.resume || 'Pas de résumé.'].filter(Boolean).join(' – ');
+  }, [callerInfoText, message.resume]);
+
+  const handleKineChange = async (event) => {
+    const newValue = event.target.value;
+    const previousValue = selectedKine;
+    setSelectedKine(newValue);
+    try {
+      await onAssignKine(message.id, newValue);
+    } catch (assignError) {
+      alert(assignError.message);
+      setSelectedKine(previousValue);
+    }
+  };
+
+  const handleTypeChange = async (event) => {
+    const newValue = event.target.value;
+    const previousValue = selectedType;
+    setSelectedType(newValue);
+    try {
+      await onUpdateType(message.id, newValue);
+    } catch (updateError) {
+      alert(updateError.message);
+      setSelectedType(previousValue);
+    }
+  };
+
+  const handleCopyPhone = async () => {
+    try {
+      await copyToClipboard(message.phone || '');
+      setPhoneCopied(true);
+      setTimeout(() => setPhoneCopied(false), COPY_TIMEOUT);
+    } catch (copyError) {
+      alert(copyError.message || 'Erreur lors de la copie.');
+    }
+  };
+
+  const handleCopySummary = async () => {
+    try {
+      await copyToClipboard(summaryText);
+      setSummaryCopied(true);
+      setTimeout(() => setSummaryCopied(false), COPY_TIMEOUT);
+    } catch (copyError) {
+      alert(copyError.message || 'Erreur lors de la copie.');
+    }
+  };
+
+  const handleCopyTranscript = async () => {
+    if (!transcriptText) {
+      return;
+    }
+    try {
+      await copyToClipboard(transcriptCopyText);
+      setTranscriptCopied(true);
+      setTimeout(() => setTranscriptCopied(false), COPY_TIMEOUT);
+    } catch (copyError) {
+      alert(copyError.message || 'Erreur lors de la copie.');
+    }
+  };
+
+  const handleDelete = async () => {
+    try {
+      await onDelete(message);
+    } catch (deleteError) {
+      alert(deleteError.message);
+    }
+  };
+
+  const renderPlayPauseIcon = () => {
+    if (!audioController.hasAudio || audioController.status === 'error') {
+      return <AudioUnavailableIcon />;
+    }
+    if (audioController.status === 'playing') {
+      return <PauseIcon />;
+    }
+    return <PlayIcon />;
+  };
+
+  return (
+    <article className={cardClassName} data-id={message.id}>
+      <div className="meta">
+        <div className="message-stamp">
+          <span>Message reçu</span>
+          <time dateTime={message.date}>{formatDate(message.date)}</time>
+        </div>
+        <div className="caller-block">
+          <span className="meta-label">Appelant</span>
+          {message.name ? <div className="name">{message.name}</div> : null}
+          <div className="phone">
+            <span>{message.phone || 'Numéro masqué'}</span>
+            <button
+              type="button"
+              className="copy-icon"
+              title="Copier le numéro"
+              aria-label="Copier le numéro"
+              onClick={handleCopyPhone}
+              disabled={!message.phone}
+            >
+              {phoneCopied ? <CopiedIcon /> : <CopyIcon />}
+            </button>
+          </div>
+          {message.email ? <div className="email">{message.email}</div> : null}
+        </div>
+        <div className="classification-grid">
+          <label>
+            <span className="meta-label">Attribué à</span>
+            <select
+              className={['select-kine', kineStyle.className].filter(Boolean).join(' ')}
+              style={{ backgroundColor: kineStyle.backgroundColor }}
+              value={selectedKine}
+              onChange={handleKineChange}
+            >
+              <option value="">Non assigné</option>
+              {KINES.map((kine) => (
+                <option key={kine} value={kine}>
+                  {kine}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label>
+            <span className="meta-label">Motif</span>
+            <select
+              className={['select-type', messageTypeStyle.className].filter(Boolean).join(' ')}
+              style={{ backgroundColor: messageTypeStyle.backgroundColor }}
+              value={selectedType}
+              onChange={handleTypeChange}
+            >
+              {MESSAGE_TYPES.map((type) => (
+                <option key={type} value={type}>
+                  {type}
+                </option>
+              ))}
+            </select>
+          </label>
+        </div>
+      </div>
+      <div className="main-content">
+        <div className="transcript-wrapper">
+          <div className="content-heading">
+            <span>Transcription</span>
+            <span className="content-rule" aria-hidden="true" />
+          </div>
+          <button
+            type="button"
+            className="copy-icon transcript-copy"
+            title="Copier le message"
+            onClick={handleCopyTranscript}
+            disabled={!transcriptText}
+          >
+            {transcriptCopied ? <CopiedIcon /> : <CopyIcon />}
+            <span className="sr-only">Copier le contenu du message</span>
+          </button>
+          <div
+            className="transcript"
+            dangerouslySetInnerHTML={{ __html: transcriptHtml }}
+          />
+        </div>
+        <div className="summary-line">
+          <span className="summary-label">À retenir</span>
+          <span className="text">{message.resume || 'Pas de résumé.'}</span>
+          <button
+            type="button"
+            className="copy-icon"
+            title="Copier infos + résumé"
+            onClick={handleCopySummary}
+          >
+            {summaryCopied ? <CopiedIcon /> : <CopyIcon />}
+            <span className="sr-only">Copier les informations et le résumé</span>
+          </button>
+        </div>
+      </div>
+      <div className="actions">
+        <span className="actions-label">Écouter</span>
+        <div className="audio-controls">
+          <button
+            type="button"
+            onClick={audioController.playPause}
+            title={
+              audioController.hasAudio
+                ? 'Lire / Pause'
+                : 'Audio indisponible'
+            }
+            disabled={!audioController.hasAudio || audioController.status === 'error'}
+          >
+            {renderPlayPauseIcon()}
+            <span className="sr-only">{isPlaying ? 'Mettre en pause' : 'Lire le message'}</span>
+          </button>
+          <button
+            type="button"
+            onClick={audioController.stop}
+            title="Arrêter"
+            disabled={!audioController.hasAudio || audioController.status === 'error'}
+          >
+            <StopIcon />
+            <span className="sr-only">Arrêter l’audio</span>
+          </button>
+        </div>
+        <input
+          type="range"
+          className="progress-bar"
+          min="0"
+          max={audioController.duration || 0}
+          step="0.01"
+          value={audioController.progress}
+          onChange={(event) => audioController.seek(Number(event.target.value))}
+          disabled={!audioController.hasAudio || audioController.status === 'error'}
+          aria-label="Progression de la lecture"
+        />
+        <span className="audio-status">
+          {!audioController.hasAudio || audioController.status === 'error'
+            ? 'Audio indisponible'
+            : isPlaying
+              ? 'Lecture en cours'
+              : 'Prêt à écouter'}
+        </span>
+        <button
+          type="button"
+          className="delete-btn"
+          title="Supprimer message"
+          onClick={handleDelete}
+        >
+          <DeleteIcon />
+          <span className="sr-only">Supprimer le message</span>
+        </button>
+      </div>
+    </article>
+  );
+};
+
+export default MessageCard;
