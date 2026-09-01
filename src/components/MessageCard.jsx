@@ -154,11 +154,9 @@ const MessageCard = ({ message, onAssignKine, onUpdateType, onDelete }) => {
     <article className={cardClassName} data-id={message.id}>
       <div className="meta">
         <div className="message-stamp">
-          <span>Message reçu</span>
           <time dateTime={message.date}>{formatDate(message.date)}</time>
         </div>
         <div className="caller-block">
-          <span className="meta-label">Appelant</span>
           {message.name ? <div className="name">{message.name}</div> : null}
           <div className="phone">
             <span>{message.phone || 'Numéro masqué'}</span>
@@ -177,7 +175,7 @@ const MessageCard = ({ message, onAssignKine, onUpdateType, onDelete }) => {
         </div>
         <div className="classification-grid">
           <label>
-            <span className="meta-label">Attribué à</span>
+            <span className="sr-only">Attribuer à un kiné</span>
             <select
               className={['select-kine', kineStyle.className].filter(Boolean).join(' ')}
               style={{ backgroundColor: kineStyle.backgroundColor }}
@@ -193,7 +191,7 @@ const MessageCard = ({ message, onAssignKine, onUpdateType, onDelete }) => {
             </select>
           </label>
           <label>
-            <span className="meta-label">Motif</span>
+            <span className="sr-only">Choisir le motif</span>
             <select
               className={['select-type', messageTypeStyle.className].filter(Boolean).join(' ')}
               style={{ backgroundColor: messageTypeStyle.backgroundColor }}
@@ -211,10 +209,6 @@ const MessageCard = ({ message, onAssignKine, onUpdateType, onDelete }) => {
       </div>
       <div className="main-content">
         <div className="transcript-wrapper">
-          <div className="content-heading">
-            <span>Transcription</span>
-            <span className="content-rule" aria-hidden="true" />
-          </div>
           <button
             type="button"
             className="copy-icon transcript-copy"
@@ -231,7 +225,6 @@ const MessageCard = ({ message, onAssignKine, onUpdateType, onDelete }) => {
           />
         </div>
         <div className="summary-line">
-          <span className="summary-label">À retenir</span>
           <span className="text">{message.resume || 'Pas de résumé.'}</span>
           <button
             type="button"
@@ -245,7 +238,6 @@ const MessageCard = ({ message, onAssignKine, onUpdateType, onDelete }) => {
         </div>
       </div>
       <div className="actions">
-        <span className="actions-label">Écouter</span>
         <div className="audio-controls">
           <button
             type="button"
@@ -281,7 +273,7 @@ const MessageCard = ({ message, onAssignKine, onUpdateType, onDelete }) => {
           disabled={!audioController.hasAudio || audioController.status === 'error'}
           aria-label="Progression de la lecture"
         />
-        <span className="audio-status">
+        <span className="sr-only">
           {!audioController.hasAudio || audioController.status === 'error'
             ? 'Audio indisponible'
             : isPlaying

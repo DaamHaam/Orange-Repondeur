@@ -26,17 +26,8 @@ const THEME_STORAGE_KEY = 'themePreference';
 const AUTHORIZED_EMAIL = 'kinecleunay@gmail.com';
 const MESSAGE_REFRESH_INTERVAL = 30000;
 
-const Waveform = ({ compact = false }) => (
-  <span className={`waveform ${compact ? 'is-compact' : ''}`} aria-hidden="true">
-    {[3, 7, 11, 6, 15, 9, 18, 12, 7, 14, 9, 5].map((height, index) => (
-      <span key={`${height}-${index}`} style={{ '--wave-height': `${height}px` }} />
-    ))}
-  </span>
-);
-
-const BrandMark = ({ compact = false }) => (
-  <div className={`brand-mark ${compact ? 'is-compact' : ''}`}>
-    <span className="brand-monogram">OR</span>
+const BrandMark = () => (
+  <div className="brand-mark">
     <span className="brand-copy">
       <strong>Répondeur</strong>
       <span>Cabinet de kinésithérapie</span>
@@ -485,7 +476,6 @@ const App = () => {
             onClick={() => setIsSettingsOpen((previous) => !previous)}
           >
             <span aria-hidden="true">⚙</span>
-            <span className="settings-button-label">Réglages</span>
           </button>
           {isSettingsOpen ? (
             <div className="settings-panel" id="settings-panel" role="dialog" aria-label="Réglages">
@@ -535,34 +525,17 @@ const App = () => {
       ) : null}
       {authLoading ? (
         <section className="auth-shell" aria-live="polite">
-          <div className="auth-visual" aria-hidden="true">
-            <BrandMark />
-            <Waveform />
-          </div>
           <div className="auth-card auth-card-loading">
-            <span className="auth-kicker">Accès sécurisé</span>
-            <h1>Le répondeur du cabinet, en clair.</h1>
+            <BrandMark />
             <p>Vérification de votre session…</p>
             <span className="loading-line" aria-hidden="true" />
           </div>
         </section>
       ) : !session ? (
         <section className="auth-shell" aria-labelledby="auth-title">
-          <div className="auth-visual">
-            <BrandMark />
-            <div className="auth-visual-message">
-              <span>Messages reçus</span>
-              <Waveform />
-            </div>
-            <p>Écouter. Comprendre. Orienter.</p>
-          </div>
           <div className="auth-card">
-            <span className="auth-kicker">Espace équipe</span>
-            <h1 id="auth-title">Vos messages, prêts à être traités.</h1>
-            <p>
-              Retrouvez les appels transcrits, attribuez-les au bon kiné et gardez
-              le compteur Orange sous contrôle.
-            </p>
+            <BrandMark />
+            <h1 id="auth-title">Connexion</h1>
             <button
               type="button"
               className="google-signin-button"
@@ -574,18 +547,14 @@ const App = () => {
             </button>
             <span className="auth-access-note">Accès réservé à l’équipe du cabinet.</span>
             {authError ? <p className="auth-error">{authError}</p> : null}
-            <span className="auth-version">Orange Répondeur · v0.24</span>
+            <span className="auth-version">v0.25</span>
           </div>
         </section>
       ) : !isAuthorizedUser ? (
         <section className="auth-shell" aria-labelledby="unauthorized-title">
-          <div className="auth-visual" aria-hidden="true">
-            <BrandMark />
-            <Waveform />
-          </div>
           <div className="auth-card unauthorized-card">
-            <span className="auth-kicker">Accès refusé</span>
-            <h1 id="unauthorized-title">Ce compte ne fait pas partie de l’équipe.</h1>
+            <BrandMark />
+            <h1 id="unauthorized-title">Compte non autorisé</h1>
             <p>{userEmail || 'Le compte Google utilisé'} n’est pas autorisé à consulter les messages.</p>
             <button
               type="button"
@@ -601,15 +570,12 @@ const App = () => {
       ) : (
         <>
           <header className="app-header">
-            <BrandMark compact />
-            <div className="app-header-signal">
-              <Waveform compact />
-              <span>Boîte vocale active</span>
-            </div>
+            <BrandMark />
             <div className="app-header-count" aria-live="polite">
               <strong>{filteredMessages.length}</strong>
-              <span>{filteredMessages.length > 1 ? 'messages affichés' : 'message affiché'}</span>
+              <span>{filteredMessages.length > 1 ? 'messages' : 'message'}</span>
             </div>
+            <span className="app-version">v0.25</span>
           </header>
           <main className="workspace">
             <FiltersBar
@@ -631,7 +597,6 @@ const App = () => {
               onDelete={handleDelete}
             />
           </main>
-          <div className="version-badge">v0.24</div>
         </>
       )}
     </div>

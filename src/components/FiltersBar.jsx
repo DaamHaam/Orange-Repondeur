@@ -22,44 +22,38 @@ const FiltersBar = ({
   const threshold = mailboxMeter?.threshold ?? 40;
   const isAlert = count >= threshold;
   const progress = Math.min(100, Math.round((count / Math.max(capacity, 1)) * 100));
-  const activeFilterCount = Number(Boolean(filters.kine)) + Number(Boolean(filters.type));
 
   return (
-    <section id="filters" aria-labelledby="filters-title">
-      <div className="filters-heading">
-        <div>
-          <span className="section-kicker">File d’appels</span>
-          <h1 id="filters-title">Messages à traiter</h1>
-        </div>
-        <span className={`filter-count ${activeFilterCount ? 'is-active' : ''}`}>
-          {activeFilterCount ? `${activeFilterCount} filtre${activeFilterCount > 1 ? 's' : ''}` : 'Vue complète'}
-        </span>
-      </div>
+    <section id="filters" aria-label="Filtres et capacité du répondeur">
       <div className="filters-toolbar">
         <div className="filters-left">
-          <label>
-            <span>Attribué à</span>
-            <select id="filter-kine" value={filters.kine} onChange={handleKineChange}>
-              <option value="">Tous les kinés</option>
-              {KINES.map((kine) => (
-                <option key={kine} value={kine}>
-                  {kine}
-                </option>
-              ))}
-              <option value="Non assigné">Kiné non assigné</option>
-            </select>
-          </label>
-          <label>
-            <span>Motif</span>
-            <select id="filter-type" value={filters.type} onChange={handleTypeChange}>
-              <option value="">Tous les motifs</option>
-              {MESSAGE_TYPES.map((type) => (
-                <option key={type} value={type}>
-                  {type}
-                </option>
-              ))}
-            </select>
-          </label>
+          <select
+            id="filter-kine"
+            aria-label="Filtrer par kiné"
+            value={filters.kine}
+            onChange={handleKineChange}
+          >
+            <option value="">Tous les kinés</option>
+            {KINES.map((kine) => (
+              <option key={kine} value={kine}>
+                {kine}
+              </option>
+            ))}
+            <option value="Non assigné">Kiné non assigné</option>
+          </select>
+          <select
+            id="filter-type"
+            aria-label="Filtrer par motif"
+            value={filters.type}
+            onChange={handleTypeChange}
+          >
+            <option value="">Tous les motifs</option>
+            {MESSAGE_TYPES.map((type) => (
+              <option key={type} value={type}>
+                {type}
+              </option>
+            ))}
+          </select>
         </div>
         <div
           className={`mailbox-meter ${isAlert ? 'is-alert' : ''}`}
@@ -67,7 +61,6 @@ const FiltersBar = ({
         >
           <div className="mailbox-meter-copy">
             <div className="mailbox-meter-main">
-              <span className="mailbox-meter-label">Capacité Orange</span>
               <span className="mailbox-meter-value">
                 {count}<small> / {capacity}</small>
               </span>
