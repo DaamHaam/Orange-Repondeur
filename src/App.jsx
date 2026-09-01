@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import FiltersBar from './components/FiltersBar.jsx';
 import MessageList from './components/MessageList.jsx';
 import { supabase } from './services/supabaseClient.js';
@@ -24,9 +24,30 @@ const sortMessages = (messages) =>
 
 const THEME_STORAGE_KEY = 'themePreference';
 const AUTHORIZED_EMAIL = 'kinecleunay@gmail.com';
+const MESSAGE_REFRESH_INTERVAL = 30000;
+
+const hasMessageMetadataChanged = (currentMessages, refreshedMetadata) => {
+  if (currentMessages.length !== refreshedMetadata.length) {
+    return true;
+  }
+
+  const currentMessagesById = new Map(
+    currentMessages.map((message) => [message.id, message]),
+  );
+
+  return refreshedMetadata.some((message) => {
+    const currentMessage = currentMessagesById.get(message.id);
+    return (
+      !currentMessage ||
+      currentMessage.prenom_kine !== message.prenom_kine ||
+      currentMessage.message_type !== message.message_type
+    );
+  });
+};
 
 const App = () => {
   const [messages, setMessages] = useState([]);
+  const messagesRef = useRef([]);
   const [mailboxMeter, setMailboxMeter] = useState(null);
   const [mailboxError, setMailboxError] = useState(null);
   const [isResettingMailbox, setIsResettingMailbox] = useState(false);
@@ -109,6 +130,10 @@ const App = () => {
     }
   }, [themePreference]);
 
+  useEffect(() => {
+    messagesRef.current = messages;
+  }, [messages]);
+
 
   useEffect(() => {
     let isMounted = true;
@@ -147,6 +172,32 @@ const App = () => {
     };
   }, []);
 
+  const fetchMessages = useCallback(async ({ showLoading = true } = {}) => {
+    if (showLoading) {
+      setLoading(true);
+      setError(null);
+    }
+
+    const { data, error: fetchError } = await supabase
+      .from('messages')
+      .select('*')
+      .order('date', { ascending: false });
+
+    if (fetchError) {
+      if (showLoading) {
+        setError(`Erreur de chargement des messages: ${fetchError.message}`);
+        setMessages([]);
+      }
+    } else {
+      setError(null);
+      setMessages(data || []);
+    }
+
+    if (showLoading) {
+      setLoading(false);
+    }
+  }, []);
+
   useEffect(() => {
     if (!session || !isAuthorizedUser) {
       setMessages([]);
@@ -157,25 +208,6 @@ const App = () => {
       setLoading(false);
       return;
     }
-
-    const fetchMessages = async () => {
-      setLoading(true);
-      setError(null);
-
-      const { data, error: fetchError } = await supabase
-        .from('messages')
-        .select('*')
-        .order('date', { ascending: false });
-
-      if (fetchError) {
-        setError(`Erreur de chargement des messages: ${fetchError.message}`);
-        setMessages([]);
-      } else {
-        setMessages(data || []);
-      }
-
-      setLoading(false);
-    };
 
     const fetchMailboxMeter = async () => {
       const { data, error: meterError } = await supabase
@@ -197,7 +229,65 @@ const App = () => {
 
     fetchMessages();
     fetchMailboxMeter();
-  }, [session, isAuthorizedUser]);
+  }, [session, isAuthorizedUser, fetchMessages]);
+
+  useEffect(() => {
+    if (!session || !isAuthorizedUser || typeof window === 'undefined') {
+      return undefined;
+    }
+
+    let isChecking = false;
+    let isDisposed = false;
+
+    const refreshMessagesIfChanged = async () => {
+      if (
+        isChecking ||
+        isDisposed ||
+        document.visibilityState !== 'visible'
+      ) {
+        return;
+      }
+
+      isChecking = true;
+
+      try {
+        const { data, error: metadataError } = await supabase
+          .from('messages')
+          .select('id, prenom_kine, message_type');
+
+        if (
+          !isDisposed &&
+          !metadataError &&
+          hasMessageMetadataChanged(messagesRef.current, data || [])
+        ) {
+          await fetchMessages({ showLoading: false });
+        }
+      } finally {
+        isChecking = false;
+      }
+    };
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        refreshMessagesIfChanged();
+      }
+    };
+
+    const intervalId = window.setInterval(
+      refreshMessagesIfChanged,
+      MESSAGE_REFRESH_INTERVAL,
+    );
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    window.addEventListener('focus', refreshMessagesIfChanged);
+
+    return () => {
+      isDisposed = true;
+      window.clearInterval(intervalId);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('focus', refreshMessagesIfChanged);
+    };
+  }, [session, isAuthorizedUser, fetchMessages]);
 
   const refreshMailboxMeter = async () => {
     const { data, error: meterError } = await supabase
@@ -346,6 +436,8 @@ const App = () => {
       );
     }
 
+    setMessages((previous) => previous.filter((item) => item.id !== id));
+
     if (audioPath) {
       const rawKey = audioPath.trim().replace(/^\/?audio-files\//, '');
       if (rawKey) {
@@ -360,13 +452,11 @@ const App = () => {
         }
       }
     }
-
-    setMessages((previous) => previous.filter((item) => item.id !== id));
   };
 
   return (
     <div className="app">
-      <div className="version-badge">v0.22</div>
+      <div className="version-badge">v0.23</div>
       {session && isAuthorizedUser ? (
         <>
           <button
