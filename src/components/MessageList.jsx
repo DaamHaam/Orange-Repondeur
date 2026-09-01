@@ -12,7 +12,11 @@ const MessageList = ({
   if (loading) {
     return (
       <div id="list">
-        <p>Chargement des messages...</p>
+        <div className="list-state is-loading" role="status">
+          <span className="state-pulse" aria-hidden="true" />
+          <strong>Récupération des messages</strong>
+          <p>La boîte vocale se synchronise…</p>
+        </div>
       </div>
     );
   }
@@ -20,7 +24,10 @@ const MessageList = ({
   if (error) {
     return (
       <div id="list">
-        <p>{error}</p>
+        <div className="list-state is-error" role="alert">
+          <strong>Impossible d’afficher les messages</strong>
+          <p>{error}</p>
+        </div>
       </div>
     );
   }
@@ -28,11 +35,15 @@ const MessageList = ({
   if (!messages.length) {
     return (
       <div id="list">
-        <p>
+        <div className="list-state">
+          <span className="empty-wave" aria-hidden="true">— · —</span>
+          <strong>{hasMessages ? 'Aucun résultat' : 'La boîte est à jour'}</strong>
+          <p>
           {hasMessages
-            ? 'Aucun message ne correspond à vos filtres.'
-            : "Aucun message pour le moment."}
-        </p>
+              ? 'Modifiez les filtres pour retrouver les autres messages.'
+              : 'Les prochains appels apparaîtront ici automatiquement.'}
+          </p>
+        </div>
       </div>
     );
   }

@@ -47,6 +47,7 @@ const MessageCard = ({ message, onAssignKine, onUpdateType, onDelete }) => {
   const CopyIcon = ICONS.Copy;
   const CopiedIcon = ICONS.Copied;
   const AudioUnavailableIcon = ICONS.AudioUnavailable;
+  const isPlaying = audioController.status === 'playing';
 
   const transcriptHtml = useMemo(() => {
     if (!message.transcript) {
@@ -150,51 +151,70 @@ const MessageCard = ({ message, onAssignKine, onUpdateType, onDelete }) => {
   };
 
   return (
-    <div className={cardClassName} data-id={message.id}>
+    <article className={cardClassName} data-id={message.id}>
       <div className="meta">
-        <div className="date">{formatDate(message.date)}</div>
-        <div className="phone">
-          <span>{message.phone}</span>
-          <button
-            type="button"
-            className="copy-icon"
-            title="Copier numéro"
-            onClick={handleCopyPhone}
-          >
-            {phoneCopied ? <CopiedIcon /> : <CopyIcon />}
-            <span className="sr-only">Copier le numéro</span>
-          </button>
+        <div className="message-stamp">
+          <span>Message reçu</span>
+          <time dateTime={message.date}>{formatDate(message.date)}</time>
         </div>
-        {message.name ? <div className="name">{message.name}</div> : null}
-        {message.email ? <div className="email">{message.email}</div> : null}
-        <select
-          className={['select-kine', kineStyle.className].filter(Boolean).join(' ')}
-          style={{ backgroundColor: kineStyle.backgroundColor }}
-          value={selectedKine}
-          onChange={handleKineChange}
-        >
-          <option value="">Kiné non assigné</option>
-          {KINES.map((kine) => (
-            <option key={kine} value={kine}>
-              {kine}
-            </option>
-          ))}
-        </select>
-        <select
-          className={['select-type', messageTypeStyle.className].filter(Boolean).join(' ')}
-          style={{ backgroundColor: messageTypeStyle.backgroundColor }}
-          value={selectedType}
-          onChange={handleTypeChange}
-        >
-          {MESSAGE_TYPES.map((type) => (
-            <option key={type} value={type}>
-              {type}
-            </option>
-          ))}
-        </select>
+        <div className="caller-block">
+          <span className="meta-label">Appelant</span>
+          {message.name ? <div className="name">{message.name}</div> : null}
+          <div className="phone">
+            <span>{message.phone || 'Numéro masqué'}</span>
+            <button
+              type="button"
+              className="copy-icon"
+              title="Copier le numéro"
+              aria-label="Copier le numéro"
+              onClick={handleCopyPhone}
+              disabled={!message.phone}
+            >
+              {phoneCopied ? <CopiedIcon /> : <CopyIcon />}
+            </button>
+          </div>
+          {message.email ? <div className="email">{message.email}</div> : null}
+        </div>
+        <div className="classification-grid">
+          <label>
+            <span className="meta-label">Attribué à</span>
+            <select
+              className={['select-kine', kineStyle.className].filter(Boolean).join(' ')}
+              style={{ backgroundColor: kineStyle.backgroundColor }}
+              value={selectedKine}
+              onChange={handleKineChange}
+            >
+              <option value="">Non assigné</option>
+              {KINES.map((kine) => (
+                <option key={kine} value={kine}>
+                  {kine}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label>
+            <span className="meta-label">Motif</span>
+            <select
+              className={['select-type', messageTypeStyle.className].filter(Boolean).join(' ')}
+              style={{ backgroundColor: messageTypeStyle.backgroundColor }}
+              value={selectedType}
+              onChange={handleTypeChange}
+            >
+              {MESSAGE_TYPES.map((type) => (
+                <option key={type} value={type}>
+                  {type}
+                </option>
+              ))}
+            </select>
+          </label>
+        </div>
       </div>
       <div className="main-content">
         <div className="transcript-wrapper">
+          <div className="content-heading">
+            <span>Transcription</span>
+            <span className="content-rule" aria-hidden="true" />
+          </div>
           <button
             type="button"
             className="copy-icon transcript-copy"
@@ -211,7 +231,8 @@ const MessageCard = ({ message, onAssignKine, onUpdateType, onDelete }) => {
           />
         </div>
         <div className="summary-line">
-          <span className="text">{summaryText}</span>
+          <span className="summary-label">À retenir</span>
+          <span className="text">{message.resume || 'Pas de résumé.'}</span>
           <button
             type="button"
             className="copy-icon"
@@ -224,6 +245,7 @@ const MessageCard = ({ message, onAssignKine, onUpdateType, onDelete }) => {
         </div>
       </div>
       <div className="actions">
+        <span className="actions-label">Écouter</span>
         <div className="audio-controls">
           <button
             type="button"
@@ -236,7 +258,7 @@ const MessageCard = ({ message, onAssignKine, onUpdateType, onDelete }) => {
             disabled={!audioController.hasAudio || audioController.status === 'error'}
           >
             {renderPlayPauseIcon()}
-            <span className="sr-only">Contrôle audio principal</span>
+            <span className="sr-only">{isPlaying ? 'Mettre en pause' : 'Lire le message'}</span>
           </button>
           <button
             type="button"
@@ -257,7 +279,15 @@ const MessageCard = ({ message, onAssignKine, onUpdateType, onDelete }) => {
           value={audioController.progress}
           onChange={(event) => audioController.seek(Number(event.target.value))}
           disabled={!audioController.hasAudio || audioController.status === 'error'}
+          aria-label="Progression de la lecture"
         />
+        <span className="audio-status">
+          {!audioController.hasAudio || audioController.status === 'error'
+            ? 'Audio indisponible'
+            : isPlaying
+              ? 'Lecture en cours'
+              : 'Prêt à écouter'}
+        </span>
         <button
           type="button"
           className="delete-btn"
@@ -268,7 +298,7 @@ const MessageCard = ({ message, onAssignKine, onUpdateType, onDelete }) => {
           <span className="sr-only">Supprimer le message</span>
         </button>
       </div>
-    </div>
+    </article>
   );
 };
 
