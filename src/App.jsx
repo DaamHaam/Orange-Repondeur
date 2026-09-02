@@ -79,43 +79,24 @@ const App = () => {
     }
 
     const storedTheme = window.localStorage.getItem(THEME_STORAGE_KEY);
-    if (['festif', 'normal', 'ocean', 'coucher-soleil'].includes(storedTheme)) {
+    if (storedTheme === 'festif') {
+      return 'normal';
+    }
+
+    if (['normal', 'ocean', 'coucher-soleil'].includes(storedTheme)) {
       return storedTheme;
     }
 
     return null;
   };
 
-  const isWithinFestivePeriod = () => {
-    const currentDate = new Date();
-    const currentMonth = currentDate.getMonth();
-    const currentDay = currentDate.getDate();
-    return (
-      (currentMonth === 11 && currentDay >= 24) || (currentMonth === 0 && currentDay <= 8)
-    );
-  };
-
-  const getSeasonalTheme = () => (isWithinFestivePeriod() ? 'festif' : 'normal');
-
-  const getInitialThemePreference = () => {
-    const storedThemePreference = getStoredThemePreference();
-    if (storedThemePreference === 'festif' && !isWithinFestivePeriod()) {
-      return 'normal';
-    }
-
-    return storedThemePreference ?? getSeasonalTheme();
-  };
+  const getInitialThemePreference = () => getStoredThemePreference() ?? 'normal';
 
   const [themePreference, setThemePreference] = useState(getInitialThemePreference);
-
-  const today = useMemo(() => new Date(), []);
-  const year = today.getFullYear();
-  const isFestiveThemeActive = themePreference === 'festif';
 
   useEffect(() => {
     const root = document.documentElement;
     const themeMap = {
-      festif: 'new-year',
       ocean: 'ocean',
       'coucher-soleil': 'sunset',
     };
@@ -502,7 +483,6 @@ const App = () => {
                   value={themePreference}
                   onChange={(event) => setThemePreference(event.target.value)}
                 >
-                  <option value="festif">Festif</option>
                   <option value="normal">Normal</option>
                   <option value="ocean">Océan</option>
                   <option value="coucher-soleil">Coucher de soleil</option>
@@ -511,17 +491,6 @@ const App = () => {
             </div>
           ) : null}
         </>
-      ) : null}
-      {isFestiveThemeActive ? (
-        <div className="new-year-icons" aria-hidden="true">
-          <span className="icon-right">🎈</span>
-          <span className="icon-bottom">🥂</span>
-        </div>
-      ) : null}
-      {isFestiveThemeActive ? (
-        <div className="new-year-banner" role="status">
-          Bonne année {year} 🥳🍾
-        </div>
       ) : null}
       {authLoading ? (
         <section className="auth-shell" aria-live="polite">
@@ -547,7 +516,7 @@ const App = () => {
             </button>
             <span className="auth-access-note">Accès réservé à l’équipe du cabinet.</span>
             {authError ? <p className="auth-error">{authError}</p> : null}
-            <span className="auth-version">v0.25</span>
+            <span className="auth-version">v0.26</span>
           </div>
         </section>
       ) : !isAuthorizedUser ? (
@@ -575,7 +544,7 @@ const App = () => {
               <strong>{filteredMessages.length}</strong>
               <span>{filteredMessages.length > 1 ? 'messages' : 'message'}</span>
             </div>
-            <span className="app-version">v0.25</span>
+            <span className="app-version">v0.26</span>
           </header>
           <main className="workspace">
             <FiltersBar

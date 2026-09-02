@@ -41,13 +41,6 @@
   --type-autre-bg: #dedfe1;
 }
 
-[data-theme="new-year"] {
-  --page: #f1eff4;
-  --signal: #79698a;
-  --signal-deep: #5b4b6c;
-  --focus: rgba(121, 105, 138, 0.25);
-}
-
 [data-theme="ocean"] {
   --page: #e9f2f4;
   --signal: #3f7f89;
@@ -259,11 +252,12 @@ input:focus-visible,
 
 /* Compact app header */
 .app-header {
+  position: relative;
   height: 3.45rem;
   padding: 0.6rem max(1rem, calc((100vw - 1380px) / 2));
-  padding-right: max(4.1rem, calc((100vw - 1380px) / 2));
+  padding-right: max(6rem, calc((100vw - 1380px) / 2 + 5rem));
   display: grid;
-  grid-template-columns: minmax(12rem, 1fr) auto auto;
+  grid-template-columns: minmax(12rem, 1fr) auto;
   align-items: center;
   gap: 1.25rem;
   background: var(--header);
@@ -287,10 +281,14 @@ input:focus-visible,
 }
 
 .app-version {
-  color: rgba(255, 255, 255, 0.48);
+  position: absolute;
+  top: 0.18rem;
+  right: 0.3rem;
+  color: rgba(255, 255, 255, 0.38);
   font-family: var(--utility-font);
-  font-size: 0.58rem;
-  letter-spacing: 0.05em;
+  font-size: 0.43rem;
+  line-height: 1;
+  letter-spacing: 0.02em;
   white-space: nowrap;
 }
 
@@ -302,11 +300,11 @@ input:focus-visible,
 
 .settings-button {
   position: absolute;
-  top: 0.58rem;
-  right: max(1rem, calc((100vw - 1380px) / 2));
+  top: 0.53rem;
+  right: max(2.45rem, calc((100vw - 1380px) / 2 + 1.45rem));
   z-index: 5;
-  width: 2.3rem;
-  height: 2.3rem;
+  width: 2.4rem;
+  height: 2.4rem;
   padding: 0;
   display: grid;
   place-items: center;
@@ -314,6 +312,8 @@ input:focus-visible,
   border-radius: 50%;
   background: transparent;
   color: #fff;
+  font-size: 1.2rem;
+  line-height: 1;
   cursor: pointer;
   transition: border-color 150ms ease, background 150ms ease;
 }
@@ -419,26 +419,6 @@ input:focus-visible,
   color: var(--ink);
   cursor: pointer;
 }
-
-/* Seasonal layer */
-.new-year-banner {
-  position: fixed;
-  left: 50%;
-  bottom: 0.75rem;
-  z-index: 7;
-  padding: 0.5rem 0.75rem;
-  border-radius: 8px;
-  background: var(--header);
-  color: #fff;
-  font-size: 0.72rem;
-  font-weight: 700;
-  transform: translateX(-50%);
-}
-
-.new-year-icons { position: fixed; inset: 0; z-index: 6; pointer-events: none; }
-.new-year-icons span { position: absolute; opacity: 0.65; }
-.new-year-icons .icon-right { top: 4rem; right: 1rem; }
-.new-year-icons .icon-bottom { right: 10vw; bottom: 1rem; }
 
 /* Filters and mailbox meter */
 #filters { margin-bottom: 0.65rem; }
@@ -923,8 +903,8 @@ select.type-Autre { background-color: var(--type-autre-bg) !important; }
 @media (max-width: 760px) {
   .app-header {
     height: 3.35rem;
-    padding: 0.55rem 3.55rem 0.55rem 0.75rem;
-    grid-template-columns: minmax(0, 1fr) auto auto;
+    padding: 0.55rem 5.75rem 0.55rem 0.75rem;
+    grid-template-columns: minmax(0, 1fr) auto;
     gap: 0.55rem;
   }
 
@@ -932,13 +912,14 @@ select.type-Autre { background-color: var(--type-autre-bg) !important; }
   .brand-copy > span { font-size: 0.48rem; }
   .app-header-count strong,
   .app-header-count span { font-size: 0.68rem; }
-  .app-version { font-size: 0.51rem; }
+  .app-version { top: 0.16rem; right: 0.25rem; font-size: 0.41rem; }
 
   .settings-button {
-    top: 0.55rem;
-    right: 0.65rem;
-    width: 2.2rem;
-    height: 2.2rem;
+    top: 0.5rem;
+    right: 2.35rem;
+    width: 2.35rem;
+    height: 2.35rem;
+    font-size: 1.17rem;
   }
 
   .settings-panel { position: fixed; top: 3rem; right: 0.65rem; }
@@ -1001,7 +982,6 @@ select.type-Autre { background-color: var(--type-autre-bg) !important; }
 
   .actions .progress-bar { width: 100%; }
   .summary-line { padding: 0.55rem 0.6rem; }
-  .new-year-banner { width: max-content; max-width: calc(100vw - 2rem); }
 }
 
 @media (max-width: 430px) {
