@@ -506,7 +506,7 @@ const App = () => {
             </button>
             <span className="auth-access-note">Accès réservé à l’équipe du cabinet.</span>
             {authError ? <p className="auth-error">{authError}</p> : null}
-            <span className="auth-version">v0.28</span>
+            <span className="auth-version">v0.29</span>
           </div>
         </section>
       ) : !isAuthorizedUser ? (
@@ -528,7 +528,7 @@ const App = () => {
         </section>
       ) : (
         <>
-          <span className="app-version">v0.28</span>
+          <span className="app-version">v0.29</span>
           <main className="workspace">
             <FiltersBar
               filters={filters}

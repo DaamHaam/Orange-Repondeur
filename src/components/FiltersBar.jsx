@@ -22,6 +22,18 @@ const FiltersBar = ({
     onChange('type', event.target.value);
   };
 
+  const handleFiltersToggle = () => {
+    if (!isFiltersOpen && isSettingsOpen) {
+      onToggleSettings();
+    }
+    setIsFiltersOpen((previous) => !previous);
+  };
+
+  const handleSettingsToggle = () => {
+    setIsFiltersOpen(false);
+    onToggleSettings();
+  };
+
   const count = mailboxMeter?.count ?? 0;
   const capacity = mailboxMeter?.capacity ?? 50;
   const threshold = mailboxMeter?.threshold ?? 40;
@@ -39,7 +51,7 @@ const FiltersBar = ({
           type="button"
           aria-expanded={isFiltersOpen}
           aria-controls="filter-controls"
-          onClick={() => setIsFiltersOpen((previous) => !previous)}
+          onClick={handleFiltersToggle}
         >
           Filtres{activeFilterCount ? ` (${activeFilterCount})` : ''}
           <span aria-hidden="true">⌄</span>
@@ -76,6 +88,24 @@ const FiltersBar = ({
             ))}
           </select>
         </div>
+        <div className={`mailbox-status ${isAlert ? 'is-alert' : ''}`} aria-live="polite">
+          <span className="mailbox-label mailbox-label-full">Répondeur Orange :</span>
+          <span className="mailbox-label mailbox-label-short">Orange</span>
+          <strong>
+            {count}<small> / {capacity}</small>
+          </strong>
+          <button
+            className="mailbox-info-button"
+            type="button"
+            aria-label="Information sur le compteur du répondeur Orange"
+            onClick={() => setIsFiltersOpen(false)}
+          >
+            i
+            <span className="mailbox-info-tooltip" role="tooltip">
+              Videz d’abord la messagerie Orange, puis marquez le répondeur comme vidé ici.
+            </span>
+          </button>
+        </div>
         <div className="mailbox-actions">
           <button
             className={`mailbox-reset-button ${isAlert ? 'is-alert' : ''}`}
@@ -84,7 +114,14 @@ const FiltersBar = ({
             disabled={isResettingMailbox}
             title={`Répondeur : ${count} message${count !== 1 ? 's' : ''} sur ${capacity}`}
           >
-            {isResettingMailbox ? 'Remise à zéro…' : 'Marquer comme vidé'}
+            {isResettingMailbox ? (
+              'Remise à zéro…'
+            ) : (
+              <>
+                <span className="reset-label-full">Marquer comme vidé</span>
+                <span className="reset-label-short">Vidé</span>
+              </>
+            )}
           </button>
         </div>
         <button
@@ -93,9 +130,20 @@ const FiltersBar = ({
           aria-label="Ouvrir les réglages"
           aria-expanded={isSettingsOpen}
           aria-controls="settings-panel"
-          onClick={onToggleSettings}
+          onClick={handleSettingsToggle}
         >
-          <span aria-hidden="true">⚙</span>
+          <svg
+            aria-hidden="true"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            <path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.09a2 2 0 0 1 1 1.74v.5a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.38a2 2 0 0 0-.73-2.73l-.15-.09a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z" />
+            <circle cx="12" cy="12" r="3" />
+          </svg>
         </button>
       </div>
       {feedback ? (
