@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { KINES, MESSAGE_TYPES } from '../constants/index.jsx';
 
 const FiltersBar = ({
@@ -8,7 +9,11 @@ const FiltersBar = ({
   resetStatus,
   onResetMailbox,
   isResettingMailbox,
+  isSettingsOpen,
+  onToggleSettings,
 }) => {
+  const [isFiltersOpen, setIsFiltersOpen] = useState(false);
+
   const handleKineChange = (event) => {
     onChange('kine', event.target.value);
   };
@@ -21,12 +26,28 @@ const FiltersBar = ({
   const capacity = mailboxMeter?.capacity ?? 50;
   const threshold = mailboxMeter?.threshold ?? 40;
   const isAlert = count >= threshold;
-  const progress = Math.min(100, Math.round((count / Math.max(capacity, 1)) * 100));
+  const activeFilterCount = Number(Boolean(filters.kine)) + Number(Boolean(filters.type));
+  const feedback = mailboxError
+    ? { type: 'error', message: mailboxError }
+    : resetStatus;
 
   return (
-    <section id="filters" aria-label="Filtres et capacité du répondeur">
+    <section id="filters" aria-label="Outils du répondeur">
       <div className="filters-toolbar">
-        <div className="filters-left">
+        <button
+          className="filters-toggle"
+          type="button"
+          aria-expanded={isFiltersOpen}
+          aria-controls="filter-controls"
+          onClick={() => setIsFiltersOpen((previous) => !previous)}
+        >
+          Filtres{activeFilterCount ? ` (${activeFilterCount})` : ''}
+          <span aria-hidden="true">⌄</span>
+        </button>
+        <div
+          className={`filters-left ${isFiltersOpen ? 'is-open' : ''}`}
+          id="filter-controls"
+        >
           <select
             id="filter-kine"
             aria-label="Filtrer par kiné"
@@ -55,46 +76,33 @@ const FiltersBar = ({
             ))}
           </select>
         </div>
-        <div
-          className={`mailbox-meter ${isAlert ? 'is-alert' : ''}`}
-          style={{ '--meter-progress': `${progress}%` }}
-        >
-          <div className="mailbox-meter-copy">
-            <div className="mailbox-meter-main">
-              <span className="mailbox-meter-value">
-                {count}<small> / {capacity}</small>
-              </span>
-              <span
-                className="mailbox-meter-info"
-                aria-label="Information sur la remise à zéro du compteur Orange"
-                tabIndex="0"
-              >
-                i
-                <span className="mailbox-meter-tooltip" role="tooltip">
-                  Videz d’abord la messagerie Orange, puis remettez ce compteur à zéro.
-                </span>
-              </span>
-            </div>
-            <div
-              className="mailbox-meter-track"
-              role="progressbar"
-              aria-valuemin="0"
-              aria-valuemax={capacity}
-              aria-valuenow={count}
-            >
-              <span />
-            </div>
-            {isAlert ? <p className="mailbox-meter-alert">Le répondeur doit être vidé.</p> : null}
-            {resetStatus ? (
-              <p className={`mailbox-meter-reset ${resetStatus.type}`}>{resetStatus.message}</p>
-            ) : null}
-            {mailboxError ? <p className="mailbox-meter-reset error">{mailboxError}</p> : null}
-          </div>
-          <button type="button" onClick={onResetMailbox} disabled={isResettingMailbox}>
+        <div className="mailbox-actions">
+          <button
+            className={`mailbox-reset-button ${isAlert ? 'is-alert' : ''}`}
+            type="button"
+            onClick={onResetMailbox}
+            disabled={isResettingMailbox}
+            title={`Répondeur : ${count} message${count !== 1 ? 's' : ''} sur ${capacity}`}
+          >
             {isResettingMailbox ? 'Remise à zéro…' : 'Marquer comme vidé'}
           </button>
         </div>
+        <button
+          className="settings-button"
+          type="button"
+          aria-label="Ouvrir les réglages"
+          aria-expanded={isSettingsOpen}
+          aria-controls="settings-panel"
+          onClick={onToggleSettings}
+        >
+          <span aria-hidden="true">⚙</span>
+        </button>
       </div>
+      {feedback ? (
+        <p className={`toolbar-feedback ${feedback.type}`} role="status">
+          {feedback.message}
+        </p>
+      ) : null}
     </section>
   );
 };

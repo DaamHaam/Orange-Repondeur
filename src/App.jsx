@@ -448,16 +448,6 @@ const App = () => {
     <div className="app">
       {session && isAuthorizedUser ? (
         <>
-          <button
-            className="settings-button"
-            type="button"
-            aria-label="Ouvrir les réglages"
-            aria-expanded={isSettingsOpen}
-            aria-controls="settings-panel"
-            onClick={() => setIsSettingsOpen((previous) => !previous)}
-          >
-            <span aria-hidden="true">⚙</span>
-          </button>
           {isSettingsOpen ? (
             <div className="settings-panel" id="settings-panel" role="dialog" aria-label="Réglages">
               <div className="settings-panel-header">
@@ -516,7 +506,7 @@ const App = () => {
             </button>
             <span className="auth-access-note">Accès réservé à l’équipe du cabinet.</span>
             {authError ? <p className="auth-error">{authError}</p> : null}
-            <span className="auth-version">v0.27</span>
+            <span className="auth-version">v0.28</span>
           </div>
         </section>
       ) : !isAuthorizedUser ? (
@@ -538,14 +528,7 @@ const App = () => {
         </section>
       ) : (
         <>
-          <header className="app-header">
-            <BrandMark />
-            <div className="app-header-count" aria-live="polite">
-              <strong>{filteredMessages.length}</strong>
-              <span>{filteredMessages.length > 1 ? 'messages' : 'message'}</span>
-            </div>
-            <span className="app-version">v0.27</span>
-          </header>
+          <span className="app-version">v0.28</span>
           <main className="workspace">
             <FiltersBar
               filters={filters}
@@ -555,6 +538,8 @@ const App = () => {
               resetStatus={mailboxResetStatus}
               onResetMailbox={handleResetMailboxCounter}
               isResettingMailbox={isResettingMailbox}
+              isSettingsOpen={isSettingsOpen}
+              onToggleSettings={() => setIsSettingsOpen((previous) => !previous)}
             />
             <MessageList
               messages={filteredMessages}
