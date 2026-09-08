@@ -12,6 +12,17 @@ import {
 
 const COPY_TIMEOUT = 1500;
 
+const stripBoldMarkers = (text = '') => text.replace(/\*\*(.*?)\*\*/g, '$1');
+
+const renderBoldText = (text) => {
+  return text.split(/(\*\*.*?\*\*)/g).map((part, index) => {
+    if (part.startsWith('**') && part.endsWith('**')) {
+      return <strong key={`${part}-${index}`}>{part.slice(2, -2)}</strong>;
+    }
+    return part;
+  });
+};
+
 const MessageCard = ({ message, onAssignKine, onUpdateType, onDelete }) => {
   const [selectedKine, setSelectedKine] = useState(message.prenom_kine || '');
   const [selectedType, setSelectedType] = useState(message.message_type || 'Autre');
@@ -72,7 +83,8 @@ const MessageCard = ({ message, onAssignKine, onUpdateType, onDelete }) => {
   }, [callerInfoText, transcriptText]);
 
   const summaryText = useMemo(() => {
-    return [callerInfoText, message.resume || 'Pas de résumé.'].filter(Boolean).join(' – ');
+    const cleanSummary = stripBoldMarkers(message.resume || 'Pas de résumé.');
+    return [callerInfoText, cleanSummary].filter(Boolean).join(' – ');
   }, [callerInfoText, message.resume]);
 
   const handleKineChange = async (event) => {
@@ -225,7 +237,9 @@ const MessageCard = ({ message, onAssignKine, onUpdateType, onDelete }) => {
           />
         </div>
         <div className="summary-line">
-          <span className="text">{message.resume || 'Pas de résumé.'}</span>
+          <span className="text">
+            {renderBoldText(message.resume || 'Pas de résumé.')}
+          </span>
           <button
             type="button"
             className="copy-icon"
