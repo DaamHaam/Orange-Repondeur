@@ -546,7 +546,8 @@ input:focus-visible,
 }
 
 .mailbox-info-button:hover .mailbox-info-tooltip,
-.mailbox-info-button:focus-visible .mailbox-info-tooltip {
+.mailbox-info-button:focus-visible .mailbox-info-tooltip,
+.mailbox-info-tooltip.is-open {
   visibility: visible;
   opacity: 1;
   transform: translateY(0);

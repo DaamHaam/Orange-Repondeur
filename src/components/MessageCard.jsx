@@ -12,10 +12,10 @@ import {
 
 const COPY_TIMEOUT = 1500;
 
-const stripBoldMarkers = (text = '') => text.replace(/\*\*(.*?)\*\*/g, '$1');
+const stripBoldMarkers = (text = '') => String(text).replace(/\*\*(.*?)\*\*/g, '$1');
 
-const renderBoldText = (text) => {
-  return text.split(/(\*\*.*?\*\*)/g).map((part, index) => {
+const renderBoldText = (text = '') => {
+  return String(text).split(/(\*\*.*?\*\*)/g).map((part, index) => {
     if (part.startsWith('**') && part.endsWith('**')) {
       return <strong key={`${part}-${index}`}>{part.slice(2, -2)}</strong>;
     }
@@ -60,18 +60,11 @@ const MessageCard = ({ message, onAssignKine, onUpdateType, onDelete }) => {
   const AudioUnavailableIcon = ICONS.AudioUnavailable;
   const isPlaying = audioController.status === 'playing';
 
-  const transcriptHtml = useMemo(() => {
-    if (!message.transcript) {
-      return '<em>Pas de transcription.</em>';
-    }
-    return message.transcript.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
-  }, [message.transcript]);
-
   const transcriptText = useMemo(() => {
     if (!message.transcript) {
       return '';
     }
-    return message.transcript.replace(/\*\*(.*?)\*\*/g, '$1');
+    return stripBoldMarkers(message.transcript);
   }, [message.transcript]);
 
   const callerInfoText = useMemo(() => {
@@ -231,10 +224,11 @@ const MessageCard = ({ message, onAssignKine, onUpdateType, onDelete }) => {
             {transcriptCopied ? <CopiedIcon /> : <CopyIcon />}
             <span className="sr-only">Copier le contenu du message</span>
           </button>
-          <div
-            className="transcript"
-            dangerouslySetInnerHTML={{ __html: transcriptHtml }}
-          />
+          <div className="transcript">
+            {message.transcript
+              ? renderBoldText(message.transcript)
+              : <em>Pas de transcription.</em>}
+          </div>
         </div>
         <div className="summary-line">
           <span className="text">

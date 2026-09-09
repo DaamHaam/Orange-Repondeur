@@ -13,25 +13,38 @@ const FiltersBar = ({
   onToggleSettings,
 }) => {
   const [isFiltersOpen, setIsFiltersOpen] = useState(false);
+  const [isMailboxInfoOpen, setIsMailboxInfoOpen] = useState(false);
 
   const handleKineChange = (event) => {
     onChange('kine', event.target.value);
+    setIsFiltersOpen(false);
   };
 
   const handleTypeChange = (event) => {
     onChange('type', event.target.value);
+    setIsFiltersOpen(false);
   };
 
   const handleFiltersToggle = () => {
     if (!isFiltersOpen && isSettingsOpen) {
       onToggleSettings();
     }
+    setIsMailboxInfoOpen(false);
     setIsFiltersOpen((previous) => !previous);
   };
 
   const handleSettingsToggle = () => {
     setIsFiltersOpen(false);
+    setIsMailboxInfoOpen(false);
     onToggleSettings();
+  };
+
+  const handleMailboxInfoToggle = () => {
+    setIsFiltersOpen(false);
+    if (!isMailboxInfoOpen && isSettingsOpen) {
+      onToggleSettings();
+    }
+    setIsMailboxInfoOpen((previous) => !previous);
   };
 
   const count = mailboxMeter?.count ?? 0;
@@ -98,10 +111,16 @@ const FiltersBar = ({
             className="mailbox-info-button"
             type="button"
             aria-label="Information sur le compteur du répondeur Orange"
-            onClick={() => setIsFiltersOpen(false)}
+            aria-expanded={isMailboxInfoOpen}
+            aria-controls="mailbox-info-tooltip"
+            onClick={handleMailboxInfoToggle}
           >
             i
-            <span className="mailbox-info-tooltip" role="tooltip">
+            <span
+              className={`mailbox-info-tooltip ${isMailboxInfoOpen ? 'is-open' : ''}`}
+              id="mailbox-info-tooltip"
+              role="tooltip"
+            >
               Videz d’abord la messagerie Orange, puis marquez le répondeur comme vidé ici.
             </span>
           </button>
