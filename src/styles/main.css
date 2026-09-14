@@ -577,8 +577,6 @@ input:focus-visible,
 .mailbox-reset-button:disabled { cursor: wait; opacity: 0.55; }
 .mailbox-reset-button.is-alert { background: var(--danger); color: #fff; }
 
-.reset-label-short { display: none; }
-
 .toolbar-feedback {
   position: fixed;
   left: 50%;
@@ -1013,10 +1011,9 @@ select.type-Autre { background-color: var(--type-autre-bg) !important; }
     min-height: 2.4rem;
     padding-inline: 0.55rem;
     font-size: 0.68rem;
+    line-height: 1.15;
+    white-space: normal;
   }
-
-  .reset-label-full { display: none; }
-  .reset-label-short { display: inline; }
 
   .card { grid-template-columns: 1fr; border-radius: 14px; }
   .card::before { right: 0; bottom: auto; width: auto; height: 0.2rem; }
@@ -1042,6 +1039,26 @@ select.type-Autre { background-color: var(--type-autre-bg) !important; }
 
 @media (max-width: 430px) {
   .classification-grid { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 380px) {
+  .filters-toolbar {
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    padding-top: 0.25rem;
+  }
+
+  .filters-toggle { grid-column: 1; grid-row: 1; }
+  .mailbox-status { grid-column: 2; grid-row: 1; }
+  .settings-button { grid-column: 3; grid-row: 1; }
+
+  .mailbox-actions {
+    grid-column: 1 / -1;
+    grid-row: 2;
+    justify-self: stretch;
+    padding: 0.25rem 0.4rem 0.4rem;
+  }
+
+  .mailbox-reset-button { width: 100%; }
 }
 
 @media (prefers-reduced-motion: reduce) {

@@ -232,6 +232,7 @@ const MessageCard = ({ message, onAssignKine, onUpdateType, onDelete }) => {
         </div>
         <div className="summary-line">
           <span className="text">
+            {callerInfoText ? `${callerInfoText} – ` : null}
             {renderBoldText(message.resume || 'Pas de résumé.')}
           </span>
           <button

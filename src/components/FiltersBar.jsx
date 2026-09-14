@@ -136,10 +136,7 @@ const FiltersBar = ({
             {isResettingMailbox ? (
               'Remise à zéro…'
             ) : (
-              <>
-                <span className="reset-label-full">Marquer comme vidé</span>
-                <span className="reset-label-short">Vidé</span>
-              </>
+              'Marquer comme vidé'
             )}
           </button>
         </div>
