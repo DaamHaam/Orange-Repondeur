@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import FiltersBar from './components/FiltersBar.jsx';
 import MessageList from './components/MessageList.jsx';
 import { supabase } from './services/supabaseClient.js';
@@ -24,9 +24,39 @@ const sortMessages = (messages) =>
 
 const THEME_STORAGE_KEY = 'themePreference';
 const AUTHORIZED_EMAIL = 'kinecleunay@gmail.com';
+const MESSAGE_REFRESH_INTERVAL = 30000;
+
+const BrandMark = () => (
+  <div className="brand-mark">
+    <span className="brand-copy">
+      <strong>Répondeur</strong>
+      <span>Cabinet de kinésithérapie</span>
+    </span>
+  </div>
+);
+
+const hasMessageMetadataChanged = (currentMessages, refreshedMetadata) => {
+  if (currentMessages.length !== refreshedMetadata.length) {
+    return true;
+  }
+
+  const currentMessagesById = new Map(
+    currentMessages.map((message) => [message.id, message]),
+  );
+
+  return refreshedMetadata.some((message) => {
+    const currentMessage = currentMessagesById.get(message.id);
+    return (
+      !currentMessage ||
+      currentMessage.prenom_kine !== message.prenom_kine ||
+      currentMessage.message_type !== message.message_type
+    );
+  });
+};
 
 const App = () => {
   const [messages, setMessages] = useState([]);
+  const messagesRef = useRef([]);
   const [mailboxMeter, setMailboxMeter] = useState(null);
   const [mailboxError, setMailboxError] = useState(null);
   const [isResettingMailbox, setIsResettingMailbox] = useState(false);
@@ -49,43 +79,24 @@ const App = () => {
     }
 
     const storedTheme = window.localStorage.getItem(THEME_STORAGE_KEY);
-    if (['festif', 'normal', 'ocean', 'coucher-soleil'].includes(storedTheme)) {
+    if (storedTheme === 'festif') {
+      return 'normal';
+    }
+
+    if (['normal', 'ocean', 'coucher-soleil'].includes(storedTheme)) {
       return storedTheme;
     }
 
     return null;
   };
 
-  const isWithinFestivePeriod = () => {
-    const currentDate = new Date();
-    const currentMonth = currentDate.getMonth();
-    const currentDay = currentDate.getDate();
-    return (
-      (currentMonth === 11 && currentDay >= 24) || (currentMonth === 0 && currentDay <= 8)
-    );
-  };
-
-  const getSeasonalTheme = () => (isWithinFestivePeriod() ? 'festif' : 'normal');
-
-  const getInitialThemePreference = () => {
-    const storedThemePreference = getStoredThemePreference();
-    if (storedThemePreference === 'festif' && !isWithinFestivePeriod()) {
-      return 'normal';
-    }
-
-    return storedThemePreference ?? getSeasonalTheme();
-  };
+  const getInitialThemePreference = () => getStoredThemePreference() ?? 'normal';
 
   const [themePreference, setThemePreference] = useState(getInitialThemePreference);
-
-  const today = useMemo(() => new Date(), []);
-  const year = today.getFullYear();
-  const isFestiveThemeActive = themePreference === 'festif';
 
   useEffect(() => {
     const root = document.documentElement;
     const themeMap = {
-      festif: 'new-year',
       ocean: 'ocean',
       'coucher-soleil': 'sunset',
     };
@@ -108,6 +119,10 @@ const App = () => {
       window.localStorage.setItem(THEME_STORAGE_KEY, themePreference);
     }
   }, [themePreference]);
+
+  useEffect(() => {
+    messagesRef.current = messages;
+  }, [messages]);
 
 
   useEffect(() => {
@@ -147,6 +162,32 @@ const App = () => {
     };
   }, []);
 
+  const fetchMessages = useCallback(async ({ showLoading = true } = {}) => {
+    if (showLoading) {
+      setLoading(true);
+      setError(null);
+    }
+
+    const { data, error: fetchError } = await supabase
+      .from('messages')
+      .select('*')
+      .order('date', { ascending: false });
+
+    if (fetchError) {
+      if (showLoading) {
+        setError(`Erreur de chargement des messages: ${fetchError.message}`);
+        setMessages([]);
+      }
+    } else {
+      setError(null);
+      setMessages(data || []);
+    }
+
+    if (showLoading) {
+      setLoading(false);
+    }
+  }, []);
+
   useEffect(() => {
     if (!session || !isAuthorizedUser) {
       setMessages([]);
@@ -157,25 +198,6 @@ const App = () => {
       setLoading(false);
       return;
     }
-
-    const fetchMessages = async () => {
-      setLoading(true);
-      setError(null);
-
-      const { data, error: fetchError } = await supabase
-        .from('messages')
-        .select('*')
-        .order('date', { ascending: false });
-
-      if (fetchError) {
-        setError(`Erreur de chargement des messages: ${fetchError.message}`);
-        setMessages([]);
-      } else {
-        setMessages(data || []);
-      }
-
-      setLoading(false);
-    };
 
     const fetchMailboxMeter = async () => {
       const { data, error: meterError } = await supabase
@@ -197,7 +219,65 @@ const App = () => {
 
     fetchMessages();
     fetchMailboxMeter();
-  }, [session, isAuthorizedUser]);
+  }, [session, isAuthorizedUser, fetchMessages]);
+
+  useEffect(() => {
+    if (!session || !isAuthorizedUser || typeof window === 'undefined') {
+      return undefined;
+    }
+
+    let isChecking = false;
+    let isDisposed = false;
+
+    const refreshMessagesIfChanged = async () => {
+      if (
+        isChecking ||
+        isDisposed ||
+        document.visibilityState !== 'visible'
+      ) {
+        return;
+      }
+
+      isChecking = true;
+
+      try {
+        const { data, error: metadataError } = await supabase
+          .from('messages')
+          .select('id, prenom_kine, message_type');
+
+        if (
+          !isDisposed &&
+          !metadataError &&
+          hasMessageMetadataChanged(messagesRef.current, data || [])
+        ) {
+          await fetchMessages({ showLoading: false });
+        }
+      } finally {
+        isChecking = false;
+      }
+    };
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        refreshMessagesIfChanged();
+      }
+    };
+
+    const intervalId = window.setInterval(
+      refreshMessagesIfChanged,
+      MESSAGE_REFRESH_INTERVAL,
+    );
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    window.addEventListener('focus', refreshMessagesIfChanged);
+
+    return () => {
+      isDisposed = true;
+      window.clearInterval(intervalId);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('focus', refreshMessagesIfChanged);
+    };
+  }, [session, isAuthorizedUser, fetchMessages]);
 
   const refreshMailboxMeter = async () => {
     const { data, error: meterError } = await supabase
@@ -346,6 +426,8 @@ const App = () => {
       );
     }
 
+    setMessages((previous) => previous.filter((item) => item.id !== id));
+
     if (audioPath) {
       const rawKey = audioPath.trim().replace(/^\/?audio-files\//, '');
       if (rawKey) {
@@ -360,25 +442,12 @@ const App = () => {
         }
       }
     }
-
-    setMessages((previous) => previous.filter((item) => item.id !== id));
   };
 
   return (
     <div className="app">
-      <div className="version-badge">v0.22</div>
       {session && isAuthorizedUser ? (
         <>
-          <button
-            className="settings-button"
-            type="button"
-            aria-label="Ouvrir les réglages"
-            aria-expanded={isSettingsOpen}
-            aria-controls="settings-panel"
-            onClick={() => setIsSettingsOpen((previous) => !previous)}
-          >
-            ⚙️
-          </button>
           {isSettingsOpen ? (
             <div className="settings-panel" id="settings-panel" role="dialog" aria-label="Réglages">
               <div className="settings-panel-header">
@@ -404,7 +473,6 @@ const App = () => {
                   value={themePreference}
                   onChange={(event) => setThemePreference(event.target.value)}
                 >
-                  <option value="festif">Festif</option>
                   <option value="normal">Normal</option>
                   <option value="ocean">Océan</option>
                   <option value="coucher-soleil">Coucher de soleil</option>
@@ -414,67 +482,75 @@ const App = () => {
           ) : null}
         </>
       ) : null}
-      {isFestiveThemeActive ? (
-        <div className="new-year-icons" aria-hidden="true">
-          <span className="icon-right">🎈</span>
-          <span className="icon-bottom">🥂</span>
-        </div>
-      ) : null}
-      {isFestiveThemeActive ? (
-        <div className="new-year-banner" role="status">
-          Bonne année {year} 🥳🍾
-        </div>
-      ) : null}
       {authLoading ? (
-        <section className="auth-card" aria-live="polite">
-          <p>Vérification de la session...</p>
+        <section className="auth-shell" aria-live="polite">
+          <div className="auth-card auth-card-loading">
+            <BrandMark />
+            <p>Vérification de votre session…</p>
+            <span className="loading-line" aria-hidden="true" />
+          </div>
         </section>
       ) : !session ? (
-        <section className="auth-card" aria-labelledby="auth-title">
-          <button
-            type="button"
-            id="auth-title"
-            className="google-signin-button"
-            onClick={handleSignInWithGoogle}
-            disabled={isSigningIn}
-          >
-            {isSigningIn ? 'Redirection...' : 'Se connecter avec votre compte Google'}
-          </button>
-          {authError ? <p className="auth-error">{authError}</p> : null}
+        <section className="auth-shell" aria-labelledby="auth-title">
+          <div className="auth-card">
+            <BrandMark />
+            <h1 id="auth-title">Connexion</h1>
+            <button
+              type="button"
+              className="google-signin-button"
+              onClick={handleSignInWithGoogle}
+              disabled={isSigningIn}
+            >
+              <span className="google-mark" aria-hidden="true">G</span>
+              {isSigningIn ? 'Redirection…' : 'Continuer avec Google'}
+            </button>
+            <span className="auth-access-note">Accès réservé à l’équipe du cabinet.</span>
+            {authError ? <p className="auth-error">{authError}</p> : null}
+            <span className="auth-version">v0.33</span>
+          </div>
         </section>
       ) : !isAuthorizedUser ? (
-        <section className="auth-card unauthorized-card" aria-labelledby="unauthorized-title">
-          <h1 id="unauthorized-title">Compte non autorisé</h1>
-          <button
-            type="button"
-            className="google-signin-button"
-            onClick={handleSignOut}
-            disabled={isSigningOut}
-          >
-            {isSigningOut ? 'Déconnexion...' : 'Se déconnecter'}
-          </button>
-          {authError ? <p className="auth-error">{authError}</p> : null}
+        <section className="auth-shell" aria-labelledby="unauthorized-title">
+          <div className="auth-card unauthorized-card">
+            <BrandMark />
+            <h1 id="unauthorized-title">Compte non autorisé</h1>
+            <p>{userEmail || 'Le compte Google utilisé'} n’est pas autorisé à consulter les messages.</p>
+            <button
+              type="button"
+              className="google-signin-button"
+              onClick={handleSignOut}
+              disabled={isSigningOut}
+            >
+              {isSigningOut ? 'Déconnexion…' : 'Changer de compte'}
+            </button>
+            {authError ? <p className="auth-error">{authError}</p> : null}
+          </div>
         </section>
       ) : (
         <>
-          <FiltersBar
-            filters={filters}
-            onChange={handleFilterChange}
-            mailboxMeter={mailboxMeter}
-            mailboxError={mailboxError}
-            resetStatus={mailboxResetStatus}
-            onResetMailbox={handleResetMailboxCounter}
-            isResettingMailbox={isResettingMailbox}
-          />
-          <MessageList
-            messages={filteredMessages}
-            loading={loading}
-            error={error}
-            hasMessages={messages.length > 0}
-            onAssignKine={handleAssignKine}
-            onUpdateType={handleUpdateType}
-            onDelete={handleDelete}
-          />
+          <span className="app-version">v0.33</span>
+          <main className="workspace">
+            <FiltersBar
+              filters={filters}
+              onChange={handleFilterChange}
+              mailboxMeter={mailboxMeter}
+              mailboxError={mailboxError}
+              resetStatus={mailboxResetStatus}
+              onResetMailbox={handleResetMailboxCounter}
+              isResettingMailbox={isResettingMailbox}
+              isSettingsOpen={isSettingsOpen}
+              onToggleSettings={() => setIsSettingsOpen((previous) => !previous)}
+            />
+            <MessageList
+              messages={filteredMessages}
+              loading={loading}
+              error={error}
+              hasMessages={messages.length > 0}
+              onAssignKine={handleAssignKine}
+              onUpdateType={handleUpdateType}
+              onDelete={handleDelete}
+            />
+          </main>
         </>
       )}
     </div>

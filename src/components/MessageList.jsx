@@ -12,7 +12,7 @@ const MessageList = ({
   if (loading) {
     return (
       <div id="list">
-        <p>Chargement des messages...</p>
+        <p className="list-state" role="status">Chargement des messages…</p>
       </div>
     );
   }
@@ -20,7 +20,7 @@ const MessageList = ({
   if (error) {
     return (
       <div id="list">
-        <p>{error}</p>
+        <p className="list-state is-error" role="alert">{error}</p>
       </div>
     );
   }
@@ -28,10 +28,10 @@ const MessageList = ({
   if (!messages.length) {
     return (
       <div id="list">
-        <p>
+        <p className="list-state">
           {hasMessages
             ? 'Aucun message ne correspond à vos filtres.'
-            : "Aucun message pour le moment."}
+            : 'Aucun message pour le moment.'}
         </p>
       </div>
     );
