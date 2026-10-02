@@ -74,6 +74,7 @@ Application web interne de consultation et de gestion des messages du répondeur
 ## Base Supabase
 
 - Toute migration ou tout SQL qui modifie la base doit être expliqué et nécessite un accord explicite avant application. La lecture est libre.
+- **Application par l'agent** : après mon accord explicite dans la conversation, appliquer soi-même la migration avec le MCP Supabase (`apply_migration` ; SQL ponctuel : `execute_sql`), en local comme dans le cloud. Ne jamais me demander de copier-coller du SQL dans l'éditeur Supabase. Ensuite vérifier (`list_migrations`, `get_advisors` sécurité) et rendre compte. Si le MCP Supabase n'est pas disponible ou n'accède pas au projet, le dire et expliquer comment le connecter, au lieu de me renvoyer le SQL. Le MCP Supabase doit avoir accès au compte `damienhamon.kine@gmail.com` (voir `ACCOUNTS.md`).
 - RLS est obligatoire sur toute table exposée. Les migrations doivent être horodatées et versionnées, avec un script de retour arrière lorsque c'est possible.
 - Ne jamais placer de clé de service Supabase dans le code client. Seule une clé publique destinée au navigateur peut y être référencée.
 
