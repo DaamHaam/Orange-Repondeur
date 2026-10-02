@@ -33,6 +33,7 @@ Carte des comptes utilisés par le projet, pour reprendre après des mois. **Auc
 | Orange | Messagerie vocale et compteur | `à compléter` | `à compléter` |
 
 ## Outils des agents
+- Comptes vus par les agents : Supabase `DamsPRO` (damienhamon.kine@gmail.com) **non branché** sur Claude (local et cloud), qui sont sur `kineslba` ; pour une migration, rebrancher ou demander. Voir WORKFLOW/CATALOGUE.md § 11.
 
 - MCP utiles : aucun requis actuellement
 - Notification : `tg-notify` (bots partagés, Trousseau `claude-ar-gs-telegram-bot` / `codex-ar-gs-telegram-bot`)
